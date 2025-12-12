@@ -4,77 +4,79 @@
 <meta charset="UTF-8">
 <title>C Chord Trainer</title>
 <style>
-body{
-  margin:0;
-  background:#0f1115;
-  color:#e6e9ef;
-  font-family:system-ui,-apple-system,sans-serif;
-}
-.wrap{
-  max-width:1040px;
-  margin:40px auto;
-  padding:28px;
-  background:linear-gradient(180deg,#1b1f27,#141821);
-  border-radius:18px;
-}
-h1{margin:0;font-size:28px}
-.sub{opacity:.6;font-size:13px;margin-bottom:18px}
-.main{display:grid;grid-template-columns:1fr 320px;gap:20px}
+  body{
+    margin:0;
+    background:#0f1115;
+    color:#e6e9ef;
+    font-family:system-ui,-apple-system,sans-serif;
+  }
+  .wrap{
+    max-width:1040px;
+    margin:40px auto;
+    padding:28px;
+    background:linear-gradient(180deg,#1b1f27,#141821);
+    border-radius:18px;
+    box-shadow:0 30px 80px rgba(0,0,0,.35);
+  }
+  h1{margin:0;font-size:28px}
+  .sub{opacity:.6;font-size:13px;margin-bottom:18px}
+  .main{display:grid;grid-template-columns:1fr 320px;gap:20px}
 
-/* ---------- FRETBOARD ---------- */
-svg{
-  width:100%;
-  height:380px;
-  background:radial-gradient(120% 120% at 50% 0%,#242a35,#151a22);
-  border-radius:14px;
-}
-.string{stroke:rgba(255,255,255,.28);stroke-width:2}
-.fret{stroke:rgba(255,255,255,.15);stroke-width:2}
-.dot{fill:#7ef0c4;stroke:#0c1b14;stroke-width:2}
-.dotText{fill:#0c1b14;font-weight:900;font-size:14px;text-anchor:middle;dominant-baseline:middle}
-.labelText{fill:rgba(255,255,255,.65);font-size:12px}
-.open{fill:none;stroke:#7ef0c4;stroke-width:3}
-.mute{fill:#f0c46a;font-size:14px;font-weight:900}
+  /* ---------- FRETBOARD ---------- */
+  svg{
+    width:100%;
+    height:400px;
+    background:radial-gradient(120% 120% at 50% 0%,#242a35,#151a22);
+    border-radius:14px;
+  }
+  .string{stroke:rgba(255,255,255,.28);stroke-width:2}
+  .fret{stroke:rgba(255,255,255,.15);stroke-width:2}
+  .dot{fill:#7ef0c4;stroke:#0c1b14;stroke-width:2}
+  .dotText{fill:#0c1b14;font-weight:900;font-size:14px;text-anchor:middle;dominant-baseline:middle}
+  .labelText{fill:rgba(255,255,255,.65);font-size:12px}
+  .fretNum{fill:rgba(255,255,255,.55);font-size:12px;text-anchor:middle}
+  .open{fill:none;stroke:#7ef0c4;stroke-width:3}
+  .mute{fill:#f0c46a;font-size:14px;font-weight:900;text-anchor:middle;dominant-baseline:middle}
 
-/* ---------- PANEL ---------- */
-.panel{
-  background:rgba(255,255,255,.04);
-  border-radius:14px;
-  padding:16px;
-}
-.codeName{font-size:30px;font-weight:900}
-.tones{font-size:13px;opacity:.75;margin-bottom:14px}
-.section{margin-bottom:14px}
-.label{font-size:12px;opacity:.6;margin-bottom:6px}
-.btns{display:flex;flex-wrap:wrap;gap:6px}
-button{
-  background:#222834;
-  color:#e6e9ef;
-  border:none;
-  border-radius:999px;
-  padding:7px 12px;
-  font-size:13px;
-  cursor:pointer;
-}
-button.active{
-  background:#7ef0c4;
-  color:#0c1b14;
-  font-weight:800;
-}
-button.disabled{
-  opacity:.4;
-  pointer-events:none;
-}
+  /* ---------- PANEL ---------- */
+  .panel{
+    background:rgba(255,255,255,.04);
+    border-radius:14px;
+    padding:16px;
+  }
+  .codeName{font-size:30px;font-weight:900}
+  .tones{font-size:13px;opacity:.75;margin-bottom:14px}
+  .section{margin-bottom:14px}
+  .label{font-size:12px;opacity:.6;margin-bottom:6px}
+  .btns{display:flex;flex-wrap:wrap;gap:6px}
+  button{
+    background:#222834;
+    color:#e6e9ef;
+    border:none;
+    border-radius:999px;
+    padding:7px 12px;
+    font-size:13px;
+    cursor:pointer;
+  }
+  button.active{
+    background:#7ef0c4;
+    color:#0c1b14;
+    font-weight:800;
+  }
+  button.disabled{
+    opacity:.35;
+    pointer-events:none;
+  }
 </style>
 </head>
 
 <body>
 <div class="wrap">
   <h1>C</h1>
-  <div class="sub">Triad + 7th + Extensions (정상 화성 구조)</div>
+  <div class="sub">Triad + 7th + Extensions (교육용: 표기/구성음/운지 연동)</div>
 
   <div class="main">
-    <svg id="fretboard" viewBox="0 0 720 380"></svg>
+    <svg id="fretboard" viewBox="0 0 760 400"></svg>
 
     <div class="panel">
       <div class="codeName" id="codeName">C</div>
@@ -90,7 +92,7 @@ button.disabled{
 
       <div class="section">
         <div class="label">7th</div>
-        <div class="btns">
+        <div class="btns" id="seventhBtns">
           <button data-7="none" class="active">없음</button>
           <button data-7="b7">♭7</button>
           <button data-7="M7">M7</button>
@@ -99,7 +101,8 @@ button.disabled{
 
       <div class="section">
         <div class="label">Extensions</div>
-        <div class="btns">
+        <div class="btns" id="extBtns">
+          <button data-ext="none" class="active">없음</button>
           <button id="add9Btn">add9</button>
           <button data-ext="9">9</button>
           <button data-ext="11">11</button>
@@ -111,131 +114,263 @@ button.disabled{
 </div>
 
 <script>
-/* ---------- STATE ---------- */
-const state={
-  triad:"maj",
-  seventh:"none",
-  add9:false,
-  ext:null
+/**
+ * 중요: 이 앱의 모든 배열은 "1(e)→6(E)" 순서다.
+ * (일반 탭 표기 x32010 은 6→1이지만, 여기선 뒤집어서 저장)
+ */
+
+const state = {
+  triad: "maj",     // "maj" | "min"
+  seventh: "none",  // "none" | "b7" | "M7"
+  add9: false,      // true/false
+  ext: null         // null | "9" | "11" | "13"
 };
 
-/* ---------- VOICINGS (C 기준 최소 DB) ---------- */
-const VOICINGS={
-  "C":      {shape:["x",3,2,0,1,0], fingers:[0,3,2,0,1,0]},
-  "Cm":     {shape:["x",3,1,0,1,3], fingers:[0,3,1,0,1,4]},
-  "C7":     {shape:["x",3,2,3,1,0], fingers:[0,3,2,4,1,0]},
-  "CM7":    {shape:["x",3,2,0,0,0], fingers:[0,3,2,0,0,0]},
-  "Cm7":    {shape:["x",3,1,3,1,3], fingers:[0,3,1,4,1,4]},
-  "C9":     {shape:["x",3,2,3,3,3], fingers:[0,1,2,3,3,3]},
-  "Cm11":   {shape:["x",3,1,3,1,1], fingers:[0,3,1,4,1,1]},
-  "C13":    {shape:["x",3,2,3,5,5], fingers:[0,1,2,3,4,4]}
+// VOICINGS: shape/fingers는 1(e)→6(E) 순서
+// fret: 0=open, "x"=mute, 1..9=fret
+const VOICINGS = {
+  // Basic triads
+  "C":      { shape:[0,1,0,2,3,"x"], fingers:[0,1,0,2,3,0] }, // x32010 -> [0,1,0,2,3,x]
+  "Cm":     { shape:[3,4,5,5,3,"x"], fingers:[1,2,4,4,1,0], barre:{fret:3, from:1, to:5, finger:1} }, // x35543 형태를 1~5현 바레로 단순화
+
+  // 7ths
+  "C7":     { shape:[0,1,3,2,3,"x"], fingers:[0,1,3,2,4,0] }, // x32310 -> [0,1,3,2,3,x]
+  "CM7":    { shape:[0,0,0,2,3,"x"], fingers:[0,0,0,1,2,0] }, // x32000 -> [0,0,0,2,3,x]
+  "Cm7":    { shape:[3,4,3,5,3,"x"], fingers:[1,2,1,4,1,0], barre:{fret:3, from:1, to:5, finger:1} }, // x35343 계열(교육용 단순)
+
+  // Add / Extensions (대표 보이싱 예시)
+  "Cadd9":  { shape:[0,3,0,2,3,"x"], fingers:[0,4,0,2,3,0] }, // x32030 -> [0,3,0,2,3,x]
+  "C9":     { shape:[3,3,3,2,3,"x"], fingers:[3,3,4,1,2,0] }, // x32333 -> [3,3,3,2,3,x]
+  "Cm9":    { shape:[3,3,3,3,3,"x"], fingers:[1,1,1,1,1,0], barre:{fret:3, from:1, to:5, finger:1} }, // x33333(교육용)
+
+  "Cm11":   { shape:[3,1,3,3,3,"x"], fingers:[2,1,3,4,4,0] }, // x33311 류를 1~5현 기준으로 근사(교육용)
+  "C13":    { shape:[5,5,5,5,3,"x"], fingers:[2,3,4,4,1,0], barre:{fret:5, from:1, to:4, finger:1} }  // x35555 류 근사(교육용)
 };
 
-/* ---------- AUTO 7 ---------- */
-function applyAuto7(){
-  if(state.ext!==null){
-    state.seventh="b7";
+/* ---------- THEORY / RULES ---------- */
+function applyRules(){
+  // ext(9/11/13) 선택 시 b7 자동 포함 (C9, C11, C13은 도미넌트 확장)
+  if(state.ext !== null){
+    state.seventh = "b7";
+  }
+
+  // ext가 켜져 있으면 add9는 의미 중복/충돌 → 자동 off
+  if(state.ext !== null && state.add9){
+    state.add9 = false;
   }
 }
 
-/* ---------- QUALITY KEY ---------- */
-function qualityKey(){
-  let k="C";
-  if(state.triad==="min") k+="m";
+function chordName(){
+  let n = "C";
+  if(state.triad === "min") n += "m";
 
-  if(state.ext!==null){
-    k+=state.ext;
-  }else{
-    if(state.seventh==="b7") k+="7";
-    if(state.seventh==="M7") k+="M7";
-    if(state.add9) k+="add9";
+  if(state.ext !== null){
+    n += state.ext;                 // C9 / Cm11 / C13
+    return n;
   }
-  return k;
+
+  if(state.seventh === "b7") n += "7";
+  if(state.seventh === "M7") n += "M7";
+  if(state.add9) n += "add9";
+  return n;
 }
 
-/* ---------- CHORD TONES ---------- */
 function chordTones(){
-  const t=["C", state.triad==="min"?"Eb":"E", "G"];
+  const t = ["C", state.triad==="min" ? "Eb" : "E", "G"];
+
   if(state.seventh==="b7") t.push("Bb");
   if(state.seventh==="M7") t.push("B");
-  if(state.add9||state.ext!==null) t.push("D");
-  if(state.ext>=11) t.push("F");
-  if(state.ext===13) t.push("A");
+
+  // add9 or extensions include 9
+  if(state.add9 || state.ext!==null) t.push("D");
+  if(state.ext==="11" || state.ext==="13") t.push("F");
+  if(state.ext==="13") t.push("A");
   return t;
+}
+
+function voicingKey(){
+  const name = chordName();
+
+  // 우선순위: DB에 있으면 그걸 사용
+  if(VOICINGS[name]) return name;
+
+  // ext가 있으면 triad+ext로 대체 시도
+  if(state.ext!==null){
+    const alt = "C" + (state.triad==="min" ? "m" : "") + state.ext;
+    if(VOICINGS[alt]) return alt;
+  }
+
+  // triad+7 대체
+  const alt7 = "C" + (state.triad==="min" ? "m" : "") +
+              (state.seventh==="b7" ? "7" : (state.seventh==="M7" ? "M7" : ""));
+  if(VOICINGS[alt7]) return alt7;
+
+  // triad fallback
+  const tri = "C" + (state.triad==="min" ? "m" : "");
+  if(VOICINGS[tri]) return tri;
+
+  return "C";
 }
 
 /* ---------- FRETBOARD RENDER ---------- */
 function drawFretboard(){
-  const svg=document.getElementById("fretboard");
-  svg.innerHTML="";
-  const W=720,H=380,p=60;
-  const strings=6,frets=9;
-  const gx=(W-p*2)/frets;
-  const gy=(H-p*2)/(strings-1);
+  const svg = document.getElementById("fretboard");
+  svg.innerHTML = "";
 
-  const labels=["1(e)","2(B)","3(G)","4(D)","5(A)","6(E)"];
+  const W=760,H=400;
+  const padL=120, padR=40, padT=55, padB=70;
+  const strings=6, frets=9;
+
+  const gridW = W - padL - padR;
+  const gridH = H - padT - padB;
+
+  const gx = gridW / frets;
+  const gy = gridH / (strings-1);
+
+  const labels = ["1(e)","2(B)","3(G)","4(D)","5(A)","6(E)"];
+
+  // string labels (left)
   labels.forEach((l,i)=>{
-    svg.innerHTML+=`<text x="20" y="${p+i*gy+4}" class="labelText">${l}</text>`;
+    const y = padT + i*gy + 4;
+    svg.innerHTML += `<text x="22" y="${y}" class="labelText">${l}</text>`;
   });
 
+  // strings
   for(let s=0;s<strings;s++){
-    const y=p+s*gy;
-    svg.innerHTML+=`<line x1="${p}" x2="${W-p}" y1="${y}" y2="${y}" class="string"/>`;
-  }
-  for(let f=0;f<=frets;f++){
-    const x=p+f*gx;
-    svg.innerHTML+=`<line x1="${x}" x2="${x}" y1="${p}" y2="${H-p}" class="fret"/>`;
+    const y = padT + s*gy;
+    svg.innerHTML += `<line x1="${padL}" x2="${W-padR}" y1="${y}" y2="${y}" class="string"/>`;
   }
 
-  const v=VOICINGS[qualityKey()];
-  if(!v) return;
+  // frets (0..9 lines)
+  for(let f=0; f<=frets; f++){
+    const x = padL + f*gx;
+    svg.innerHTML += `<line x1="${x}" x2="${x}" y1="${padT}" y2="${padT+gridH}" class="fret"/>`;
+  }
 
+  // fret numbers (1..9)
+  for(let f=1; f<=frets; f++){
+    const x = padL + (f-0.5)*gx;
+    svg.innerHTML += `<text x="${x}" y="${H-28}" class="fretNum">${f}</text>`;
+  }
+
+  const key = voicingKey();
+  const v = VOICINGS[key];
+
+  // O/X 표시 위치(라벨과 겹치지 않게)
+  const oxX = padL - 45;
+
+  // barre (visual only)
+  if(v.barre){
+    const {fret, from, to, finger} = v.barre; // from/to: 1..6
+    const x = padL + (fret-0.5)*gx;
+    const y1 = padT + (from-1)*gy;
+    const y2 = padT + (to-1)*gy;
+    const h = Math.abs(y2-y1) + 22;
+    const y = Math.min(y1,y2) - 11;
+
+    svg.innerHTML += `
+      <rect x="${x-13}" y="${y}" width="26" height="${h}" rx="13"
+            fill="rgba(126,240,196,.25)" stroke="rgba(126,240,196,.7)" stroke-width="2"></rect>
+      <text x="${x}" y="${y-8}" class="labelText">${finger}</text>
+    `;
+  }
+
+  // dots + OX
   v.shape.forEach((fret,i)=>{
-    const y=p+i*gy;
+    const y = padT + i*gy;
+
     if(fret==="x"){
-      svg.innerHTML+=`<text x="${p-30}" y="${y+5}" class="mute">X</text>`;
-    }else if(fret===0){
-      svg.innerHTML+=`<circle cx="${p-20}" cy="${y}" r="6" class="open"/>`;
-    }else{
-      const x=p+(fret-0.5)*gx;
-      svg.innerHTML+=`
-        <circle cx="${x}" cy="${y}" r="14" class="dot"/>
-        <text x="${x}" y="${y+1}" class="dotText">${v.fingers[i]}</text>`;
+      svg.innerHTML += `<text x="${oxX}" y="${y}" class="mute">X</text>`;
+      return;
     }
+    if(fret===0){
+      svg.innerHTML += `<circle cx="${oxX}" cy="${y}" r="6" class="open"></circle>`;
+      return;
+    }
+
+    const x = padL + (fret-0.5)*gx;
+    const finger = v.fingers[i] || 0;
+
+    svg.innerHTML += `
+      <circle cx="${x}" cy="${y}" r="14" class="dot"></circle>
+      <text x="${x}" y="${y+1}" class="dotText">${finger}</text>
+    `;
   });
 }
 
-/* ---------- RENDER ---------- */
+/* ---------- UI STATE SYNC ---------- */
+function syncUI(){
+  // triad
+  majBtn.classList.toggle("active", state.triad==="maj");
+  minBtn.classList.toggle("active", state.triad==="min");
+
+  // 7th buttons
+  document.querySelectorAll("[data-7]").forEach(b=>{
+    b.classList.toggle("active", b.dataset["7"]===state.seventh);
+  });
+
+  // extensions
+  document.querySelectorAll("[data-ext]").forEach(b=>{
+    const v=b.dataset.ext;
+    b.classList.toggle("active", (v==="none" && state.ext===null) || (v!=="none" && state.ext===v));
+  });
+
+  add9Btn.classList.toggle("active", state.add9);
+
+  // ext가 켜져 있으면 7th는 b7로 고정(학습용으로 “선택 불가” 표현)
+  const extOn = state.ext !== null;
+  document.querySelectorAll("[data-7]").forEach(b=>{
+    const v=b.dataset["7"];
+    if(extOn){
+      // b7만 활성, 나머지 비활성
+      b.classList.toggle("disabled", v!=="b7");
+    }else{
+      b.classList.remove("disabled");
+    }
+  });
+
+  // extOn이면 add9 비활성
+  add9Btn.classList.toggle("disabled", extOn);
+}
+
 function render(){
-  applyAuto7();
-  const key=qualityKey();
-  document.getElementById("codeName").innerText=key;
-  document.getElementById("tones").innerText=
-    "Chord tones: "+chordTones().join(" – ");
+  applyRules();
+  syncUI();
+
+  const name = chordName();
+  document.getElementById("codeName").innerText = name;
+  document.getElementById("tones").innerText = "Chord tones: " + chordTones().join(" – ");
   drawFretboard();
 }
 
 /* ---------- EVENTS ---------- */
-majBtn.onclick=()=>{state.triad="maj";majBtn.classList.add("active");minBtn.classList.remove("active");render();}
-minBtn.onclick=()=>{state.triad="min";minBtn.classList.add("active");majBtn.classList.remove("active");render();}
+majBtn.onclick=()=>{ state.triad="maj"; render(); };
+minBtn.onclick=()=>{ state.triad="min"; render(); };
 
 document.querySelectorAll("[data-7]").forEach(b=>{
-  b.onclick=()=>{state.seventh=b.dataset["7"];render();}
+  b.onclick=()=>{
+    if(state.ext!==null) return; // ext 켜져 있으면 7은 고정(b7)
+    state.seventh=b.dataset["7"];
+    render();
+  };
 });
 
 add9Btn.onclick=()=>{
   if(state.ext!==null) return;
   state.add9=!state.add9;
-  add9Btn.classList.toggle("active",state.add9);
   render();
 };
 
 document.querySelectorAll("[data-ext]").forEach(b=>{
   b.onclick=()=>{
     const v=b.dataset.ext;
-    state.ext=(state.ext===v?null:v);
-    document.querySelectorAll("[data-ext]").forEach(x=>x.classList.remove("active"));
-    if(state.ext) b.classList.add("active");
+    if(v==="none"){
+      state.ext=null;
+      render();
+      return;
+    }
+    // 라디오 + 재클릭 해제
+    state.ext = (state.ext===v ? null : v);
     render();
   };
 });
