@@ -19,7 +19,9 @@
     box-shadow:0 30px 80px rgba(0,0,0,.35);
   }
   h1{margin:0;font-size:28px}
-  .sub{opacity:.6;font-size:13px;margin-bottom:18px}
+  /* ✅ 작은 글자 제거: sub는 남겨두되 숨김 처리 */
+  .sub{display:none;}
+
   .main{display:grid;grid-template-columns:1fr 320px;gap:20px}
 
   /* ---------- FRETBOARD ---------- */
@@ -73,7 +75,7 @@
 <body>
 <div class="wrap">
   <h1>C</h1>
-  <div class="sub">Triad + 7th + Extensions (교육용: 표기/구성음/운지 연동)</div>
+  <div class="sub">숨김</div>
 
   <div class="main">
     <svg id="fretboard" viewBox="0 0 760 400"></svg>
@@ -115,73 +117,59 @@
 
 <script>
 /**
- * 중요: 이 앱의 모든 배열은 "1(e)→6(E)" 순서다.
- * (일반 탭 표기 x32010 은 6→1이지만, 여기선 뒤집어서 저장)
+ * 모든 배열은 "1(e)→6(E)" 순서
  */
 
 const state = {
-  triad: "maj",     // "maj" | "min"
-  seventh: "none",  // "none" | "b7" | "M7"
-  add9: false,      // true/false
-  ext: null         // null | "9" | "11" | "13"
+  triad: "maj",
+  seventh: "none",
+  add9: false,
+  ext: null
 };
 
-// VOICINGS: shape/fingers는 1(e)→6(E) 순서
-// fret: 0=open, "x"=mute, 1..9=fret
+// shape/fingers: 1(e)→6(E)
 const VOICINGS = {
-  // Basic triads
-  "C":      { shape:[0,1,0,2,3,"x"], fingers:[0,1,0,2,3,0] }, // x32010 -> [0,1,0,2,3,x]
-  "Cm":     { shape:[3,4,5,5,3,"x"], fingers:[1,2,4,4,1,0], barre:{fret:3, from:1, to:5, finger:1} }, // x35543 형태를 1~5현 바레로 단순화
+  "C":      { shape:[0,1,0,2,3,"x"], fingers:[0,1,0,2,3,0] },
+  "Cm":     { shape:[3,4,5,5,3,"x"], fingers:[1,2,4,4,1,0], barre:{fret:3, from:1, to:5, finger:1} },
 
-  // 7ths
-  "C7":     { shape:[0,1,3,2,3,"x"], fingers:[0,1,3,2,4,0] }, // x32310 -> [0,1,3,2,3,x]
-  "CM7":    { shape:[0,0,0,2,3,"x"], fingers:[0,0,0,1,2,0] }, // x32000 -> [0,0,0,2,3,x]
-  "Cm7":    { shape:[3,4,3,5,3,"x"], fingers:[1,2,1,4,1,0], barre:{fret:3, from:1, to:5, finger:1} }, // x35343 계열(교육용 단순)
+  "C7":     { shape:[0,1,3,2,3,"x"], fingers:[0,1,3,2,4,0] },
+  "CM7":    { shape:[0,0,0,2,3,"x"], fingers:[0,0,0,1,2,0] },
+  "Cm7":    { shape:[3,4,3,5,3,"x"], fingers:[1,2,1,4,1,0], barre:{fret:3, from:1, to:5, finger:1} },
 
-  // Add / Extensions (대표 보이싱 예시)
-  "Cadd9":  { shape:[0,3,0,2,3,"x"], fingers:[0,4,0,2,3,0] }, // x32030 -> [0,3,0,2,3,x]
-  "C9":     { shape:[3,3,3,2,3,"x"], fingers:[3,3,4,1,2,0] }, // x32333 -> [3,3,3,2,3,x]
-  "Cm9":    { shape:[3,3,3,3,3,"x"], fingers:[1,1,1,1,1,0], barre:{fret:3, from:1, to:5, finger:1} }, // x33333(교육용)
+  "Cadd9":  { shape:[0,3,0,2,3,"x"], fingers:[0,4,0,2,3,0] },
+  "C9":     { shape:[3,3,3,2,3,"x"], fingers:[3,3,4,1,2,0] },
+  "Cm9":    { shape:[3,3,3,3,3,"x"], fingers:[1,1,1,1,1,0], barre:{fret:3, from:1, to:5, finger:1} },
 
-  "Cm11":   { shape:[3,1,3,3,3,"x"], fingers:[2,1,3,4,4,0] }, // x33311 류를 1~5현 기준으로 근사(교육용)
-  "C13":    { shape:[5,5,5,5,3,"x"], fingers:[2,3,4,4,1,0], barre:{fret:5, from:1, to:4, finger:1} }  // x35555 류 근사(교육용)
+  "Cm11":   { shape:[3,1,3,3,3,"x"], fingers:[2,1,3,4,4,0] },
+  "C13":    { shape:[5,5,5,5,3,"x"], fingers:[2,3,4,4,1,0], barre:{fret:5, from:1, to:4, finger:1} }
 };
 
-/* ---------- THEORY / RULES ---------- */
 function applyRules(){
-  // ext(9/11/13) 선택 시 b7 자동 포함 (C9, C11, C13은 도미넌트 확장)
   if(state.ext !== null){
     state.seventh = "b7";
-  }
-
-  // ext가 켜져 있으면 add9는 의미 중복/충돌 → 자동 off
-  if(state.ext !== null && state.add9){
-    state.add9 = false;
+    if(state.add9) state.add9 = false;
   }
 }
 
 function chordName(){
-  let n = "C";
-  if(state.triad === "min") n += "m";
+  let n="C";
+  if(state.triad==="min") n+="m";
 
-  if(state.ext !== null){
-    n += state.ext;                 // C9 / Cm11 / C13
+  if(state.ext!==null){
+    n += state.ext;
     return n;
   }
 
-  if(state.seventh === "b7") n += "7";
-  if(state.seventh === "M7") n += "M7";
-  if(state.add9) n += "add9";
+  if(state.seventh==="b7") n+="7";
+  if(state.seventh==="M7") n+="M7";
+  if(state.add9) n+="add9";
   return n;
 }
 
 function chordTones(){
-  const t = ["C", state.triad==="min" ? "Eb" : "E", "G"];
-
+  const t=["C", state.triad==="min"?"Eb":"E", "G"];
   if(state.seventh==="b7") t.push("Bb");
   if(state.seventh==="M7") t.push("B");
-
-  // add9 or extensions include 9
   if(state.add9 || state.ext!==null) t.push("D");
   if(state.ext==="11" || state.ext==="13") t.push("F");
   if(state.ext==="13") t.push("A");
@@ -190,94 +178,77 @@ function chordTones(){
 
 function voicingKey(){
   const name = chordName();
-
-  // 우선순위: DB에 있으면 그걸 사용
   if(VOICINGS[name]) return name;
 
-  // ext가 있으면 triad+ext로 대체 시도
   if(state.ext!==null){
-    const alt = "C" + (state.triad==="min" ? "m" : "") + state.ext;
+    const alt = "C" + (state.triad==="min"?"m":"") + state.ext;
     if(VOICINGS[alt]) return alt;
   }
 
-  // triad+7 대체
-  const alt7 = "C" + (state.triad==="min" ? "m" : "") +
-              (state.seventh==="b7" ? "7" : (state.seventh==="M7" ? "M7" : ""));
+  const alt7 = "C" + (state.triad==="min"?"m":"") +
+    (state.seventh==="b7"?"7":(state.seventh==="M7"?"M7":""));
   if(VOICINGS[alt7]) return alt7;
 
-  // triad fallback
-  const tri = "C" + (state.triad==="min" ? "m" : "");
+  const tri = "C" + (state.triad==="min"?"m":"");
   if(VOICINGS[tri]) return tri;
 
   return "C";
 }
 
-/* ---------- FRETBOARD RENDER ---------- */
 function drawFretboard(){
-  const svg = document.getElementById("fretboard");
-  svg.innerHTML = "";
+  const svg=document.getElementById("fretboard");
+  svg.innerHTML="";
 
   const W=760,H=400;
   const padL=120, padR=40, padT=55, padB=70;
   const strings=6, frets=9;
 
-  const gridW = W - padL - padR;
-  const gridH = H - padT - padB;
+  const gridW=W-padL-padR;
+  const gridH=H-padT-padB;
+  const gx=gridW/frets;
+  const gy=gridH/(strings-1);
 
-  const gx = gridW / frets;
-  const gy = gridH / (strings-1);
-
-  const labels = ["1(e)","2(B)","3(G)","4(D)","5(A)","6(E)"];
-
-  // string labels (left)
+  const labels=["1(e)","2(B)","3(G)","4(D)","5(A)","6(E)"];
   labels.forEach((l,i)=>{
-    const y = padT + i*gy + 4;
-    svg.innerHTML += `<text x="22" y="${y}" class="labelText">${l}</text>`;
+    svg.innerHTML += `<text x="22" y="${padT+i*gy+4}" class="labelText">${l}</text>`;
   });
 
-  // strings
   for(let s=0;s<strings;s++){
-    const y = padT + s*gy;
+    const y=padT+s*gy;
     svg.innerHTML += `<line x1="${padL}" x2="${W-padR}" y1="${y}" y2="${y}" class="string"/>`;
   }
-
-  // frets (0..9 lines)
-  for(let f=0; f<=frets; f++){
-    const x = padL + f*gx;
+  for(let f=0;f<=frets;f++){
+    const x=padL+f*gx;
     svg.innerHTML += `<line x1="${x}" x2="${x}" y1="${padT}" y2="${padT+gridH}" class="fret"/>`;
   }
-
-  // fret numbers (1..9)
-  for(let f=1; f<=frets; f++){
-    const x = padL + (f-0.5)*gx;
+  for(let f=1;f<=frets;f++){
+    const x=padL+(f-0.5)*gx;
     svg.innerHTML += `<text x="${x}" y="${H-28}" class="fretNum">${f}</text>`;
   }
 
-  const key = voicingKey();
-  const v = VOICINGS[key];
+  const key=voicingKey();
+  const v=VOICINGS[key];
+  if(!v) return;
 
-  // O/X 표시 위치(라벨과 겹치지 않게)
   const oxX = padL - 45;
 
-  // barre (visual only)
   if(v.barre){
-    const {fret, from, to, finger} = v.barre; // from/to: 1..6
-    const x = padL + (fret-0.5)*gx;
-    const y1 = padT + (from-1)*gy;
-    const y2 = padT + (to-1)*gy;
-    const h = Math.abs(y2-y1) + 22;
-    const y = Math.min(y1,y2) - 11;
+    const {fret,from,to,finger}=v.barre;
+    const x=padL+(fret-0.5)*gx;
+    const y1=padT+(from-1)*gy;
+    const y2=padT+(to-1)*gy;
+    const h=Math.abs(y2-y1)+22;
+    const y=Math.min(y1,y2)-11;
 
     svg.innerHTML += `
       <rect x="${x-13}" y="${y}" width="26" height="${h}" rx="13"
-            fill="rgba(126,240,196,.25)" stroke="rgba(126,240,196,.7)" stroke-width="2"></rect>
+        fill="rgba(126,240,196,.25)" stroke="rgba(126,240,196,.7)" stroke-width="2"></rect>
       <text x="${x}" y="${y-8}" class="labelText">${finger}</text>
     `;
   }
 
-  // dots + OX
   v.shape.forEach((fret,i)=>{
-    const y = padT + i*gy;
+    const y=padT+i*gy;
 
     if(fret==="x"){
       svg.innerHTML += `<text x="${oxX}" y="${y}" class="mute">X</text>`;
@@ -288,8 +259,8 @@ function drawFretboard(){
       return;
     }
 
-    const x = padL + (fret-0.5)*gx;
-    const finger = v.fingers[i] || 0;
+    const x=padL+(fret-0.5)*gx;
+    const finger=v.fingers[i]||0;
 
     svg.innerHTML += `
       <circle cx="${x}" cy="${y}" r="14" class="dot"></circle>
@@ -298,47 +269,43 @@ function drawFretboard(){
   });
 }
 
-/* ---------- UI STATE SYNC ---------- */
 function syncUI(){
-  // triad
   majBtn.classList.toggle("active", state.triad==="maj");
   minBtn.classList.toggle("active", state.triad==="min");
 
-  // 7th buttons
   document.querySelectorAll("[data-7]").forEach(b=>{
     b.classList.toggle("active", b.dataset["7"]===state.seventh);
   });
 
-  // extensions
+  // ✅ 핵심: "없음"은 (ext===null && add9===false)일 때만 active
   document.querySelectorAll("[data-ext]").forEach(b=>{
     const v=b.dataset.ext;
-    b.classList.toggle("active", (v==="none" && state.ext===null) || (v!=="none" && state.ext===v));
+    const isNone = (v==="none");
+    const active =
+      (isNone && state.ext===null && state.add9===false) ||
+      (!isNone && state.ext===v);
+    b.classList.toggle("active", active);
   });
 
   add9Btn.classList.toggle("active", state.add9);
 
-  // ext가 켜져 있으면 7th는 b7로 고정(학습용으로 “선택 불가” 표현)
   const extOn = state.ext !== null;
   document.querySelectorAll("[data-7]").forEach(b=>{
     const v=b.dataset["7"];
-    if(extOn){
-      // b7만 활성, 나머지 비활성
-      b.classList.toggle("disabled", v!=="b7");
-    }else{
-      b.classList.remove("disabled");
-    }
+    if(extOn) addClass(b, "disabled", v!=="b7");
+    else removeClass(b, "disabled");
   });
 
-  // extOn이면 add9 비활성
-  add9Btn.classList.toggle("disabled", extOn);
+  addClass(add9Btn, "disabled", extOn);
 }
+
+function addClass(el, cls, yes){ el.classList.toggle(cls, !!yes); }
+function removeClass(el, cls){ el.classList.remove(cls); }
 
 function render(){
   applyRules();
   syncUI();
-
-  const name = chordName();
-  document.getElementById("codeName").innerText = name;
+  document.getElementById("codeName").innerText = chordName();
   document.getElementById("tones").innerText = "Chord tones: " + chordTones().join(" – ");
   drawFretboard();
 }
@@ -349,8 +316,23 @@ minBtn.onclick=()=>{ state.triad="min"; render(); };
 
 document.querySelectorAll("[data-7]").forEach(b=>{
   b.onclick=()=>{
-    if(state.ext!==null) return; // ext 켜져 있으면 7은 고정(b7)
+    if(state.ext!==null) return;
     state.seventh=b.dataset["7"];
+    render();
+  };
+});
+
+// ✅ "없음"을 누르면 add9도 꺼짐
+document.querySelectorAll("[data-ext]").forEach(b=>{
+  b.onclick=()=>{
+    const v=b.dataset.ext;
+    if(v==="none"){
+      state.ext=null;
+      state.add9=false;   // ✅ 추가
+      render();
+      return;
+    }
+    state.ext = (state.ext===v ? null : v);
     render();
   };
 });
@@ -360,20 +342,6 @@ add9Btn.onclick=()=>{
   state.add9=!state.add9;
   render();
 };
-
-document.querySelectorAll("[data-ext]").forEach(b=>{
-  b.onclick=()=>{
-    const v=b.dataset.ext;
-    if(v==="none"){
-      state.ext=null;
-      render();
-      return;
-    }
-    // 라디오 + 재클릭 해제
-    state.ext = (state.ext===v ? null : v);
-    render();
-  };
-});
 
 render();
 </script>
