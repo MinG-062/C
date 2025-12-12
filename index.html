@@ -1,143 +1,70 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8" />
+<meta charset="UTF-8">
 <title>C Chord Badge</title>
 <style>
-  body {
-    margin: 0;
-    font-family: system-ui, -apple-system, sans-serif;
-    background: #0f1115;
-    color: #e6e9ef;
-  }
+body{
+  margin:0;
+  background:#0f1115;
+  color:#e6e9ef;
+  font-family:system-ui,-apple-system,sans-serif;
+}
+.wrap{
+  max-width:1000px;
+  margin:40px auto;
+  padding:26px;
+  background:linear-gradient(180deg,#1b1f27,#141821);
+  border-radius:18px;
+}
+h1{margin:0;font-size:28px}
+.sub{opacity:.6;font-size:13px;margin-bottom:18px}
+.main{display:grid;grid-template-columns:1fr 300px;gap:20px}
 
-  .wrap {
-    max-width: 980px;
-    margin: 40px auto;
-    padding: 24px;
-    background: linear-gradient(180deg,#1b1f27,#141821);
-    border-radius: 18px;
-    box-shadow: 0 30px 80px rgba(0,0,0,.45);
-  }
+/* ---------- FRETBOARD ---------- */
+svg{
+  width:100%;
+  height:360px;
+  background:radial-gradient(120% 120% at 50% 0%,#242a35,#151a22);
+  border-radius:14px;
+}
+.string{stroke:rgba(255,255,255,.28);stroke-width:2}
+.fret{stroke:rgba(255,255,255,.15);stroke-width:2}
+.dot{fill:#7ef0c4;stroke:#0c1b14;stroke-width:2}
+.dotText{fill:#0c1b14;font-weight:900;font-size:14px;text-anchor:middle;dominant-baseline:middle}
+.labelText{fill:rgba(255,255,255,.65);font-size:12px}
 
-  h1 {
-    margin: 0 0 6px;
-    font-size: 28px;
-  }
-
-  .sub {
-    opacity: .65;
-    font-size: 13px;
-    margin-bottom: 18px;
-  }
-
-  .main {
-    display: grid;
-    grid-template-columns: 1fr 280px;
-    gap: 20px;
-  }
-
-  /* ---------- FRETBOARD ---------- */
-
-  svg {
-    width: 100%;
-    height: 360px;
-    background: radial-gradient(120% 120% at 50% 0%, #242a35, #151a22);
-    border-radius: 14px;
-  }
-
-  .string {
-    stroke: rgba(255,255,255,.25);
-    stroke-width: 2;
-  }
-
-  .fret {
-    stroke: rgba(255,255,255,.15);
-    stroke-width: 2;
-  }
-
-  .dot {
-    fill: #7ef0c4;
-    stroke: rgba(0,0,0,.4);
-    stroke-width: 2;
-  }
-
-  .dotText {
-    fill: #0c1b14;
-    font-size: 14px;
-    font-weight: 900;
-    text-anchor: middle;
-    dominant-baseline: middle;
-  }
-
-  .open {
-    fill: none;
-    stroke: #7ef0c4;
-    stroke-width: 3;
-  }
-
-  .mute {
-    fill: #f0c46a;
-    font-weight: 900;
-  }
-
-  /* ---------- CONTROLS ---------- */
-
-  .panel {
-    background: rgba(255,255,255,.04);
-    border-radius: 14px;
-    padding: 16px;
-  }
-
-  .codeName {
-    font-size: 28px;
-    font-weight: 900;
-    margin-bottom: 6px;
-  }
-
-  .tones {
-    font-size: 13px;
-    opacity: .75;
-    margin-bottom: 14px;
-  }
-
-  .section {
-    margin-bottom: 14px;
-  }
-
-  .label {
-    font-size: 12px;
-    opacity: .6;
-    margin-bottom: 6px;
-  }
-
-  .btns {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-  }
-
-  button {
-    background: #222834;
-    color: #e6e9ef;
-    border: none;
-    border-radius: 999px;
-    padding: 7px 12px;
-    font-size: 13px;
-    cursor: pointer;
-  }
-
-  button.active {
-    background: #7ef0c4;
-    color: #0c1b14;
-    font-weight: 800;
-  }
+/* ---------- PANEL ---------- */
+.panel{
+  background:rgba(255,255,255,.04);
+  border-radius:14px;
+  padding:16px;
+}
+.codeName{font-size:30px;font-weight:900}
+.tones{font-size:13px;opacity:.75;margin-bottom:14px}
+.section{margin-bottom:14px}
+.label{font-size:12px;opacity:.6;margin-bottom:6px}
+.btns{display:flex;flex-wrap:wrap;gap:6px}
+button{
+  background:#222834;
+  color:#e6e9ef;
+  border:none;
+  border-radius:999px;
+  padding:7px 12px;
+  font-size:13px;
+  cursor:pointer;
+}
+button.active{
+  background:#7ef0c4;
+  color:#0c1b14;
+  font-weight:800;
+}
 </style>
 </head>
 
 <body>
 <div class="wrap">
-  <h1 id="title">C</h1>
+  <h1>C</h1>
   <div class="sub">Triad + 7th + Extensions 구조</div>
 
   <div class="main">
@@ -167,7 +94,7 @@
       <div class="section">
         <div class="label">Extensions</div>
         <div class="btns">
-          <button data-ext="add9">add9</button>
+          <button id="add9Btn">add9</button>
           <button data-ext="9">9</button>
           <button data-ext="11">11</button>
           <button data-ext="13">13</button>
@@ -179,116 +106,118 @@
 
 <script>
 /* ---------- STATE ---------- */
-const state = {
-  triad: "maj",      // maj | min
-  seventh: "none",   // none | b7 | M7
-  exts: new Set()
+const state={
+  triad:"maj",
+  seventh:"none",
+  add9:false,
+  ext:null // null | 9 | 11 | 13
 };
-
-/* ---------- NOTES ---------- */
-const NOTES = ["C","C#","D","Eb","E","F","F#","G","Ab","A","Bb","B"];
 
 /* ---------- AUTO 7 RULE ---------- */
 function applyAuto7(){
-  if (state.exts.has("9") || state.exts.has("11") || state.exts.has("13")) {
-    state.seventh = "b7";
+  if(state.ext!==null){
+    state.seventh="b7";
     document.querySelectorAll("[data-7]").forEach(b=>{
-      b.classList.toggle("active", b.dataset["7"]==="b7");
+      b.classList.toggle("active",b.dataset["7"]==="b7");
     });
   }
 }
 
 /* ---------- CHORD NAME ---------- */
 function chordName(){
-  let n = "C";
-  if (state.triad === "min") n += "m";
-  if (state.seventh === "b7") n += "7";
-  if (state.seventh === "M7") n += "M7";
+  let n="C";
+  if(state.triad==="min") n+="m";
 
-  state.exts.forEach(e=>{
-    if (e==="add9") n += "add9";
-    else n += e;
-  });
+  if(state.ext!==null){
+    n+=state.ext;
+  }else{
+    if(state.seventh==="b7") n+="7";
+    if(state.seventh==="M7") n+="M7";
+  }
+
+  if(state.add9 && state.ext===null) n+="add9";
   return n;
 }
 
 /* ---------- CHORD TONES ---------- */
 function chordTones(){
-  const t = [];
+  const t=[];
   t.push("C");
-  t.push(state.triad==="min" ? "Eb" : "E");
+  t.push(state.triad==="min"?"Eb":"E");
   t.push("G");
 
-  if (state.seventh==="b7") t.push("Bb");
-  if (state.seventh==="M7") t.push("B");
+  if(state.seventh==="b7") t.push("Bb");
+  if(state.seventh==="M7") t.push("B");
 
-  if (state.exts.has("add9") || state.exts.has("9") || state.exts.has("11") || state.exts.has("13"))
-    t.push("D");
-  if (state.exts.has("11") || state.exts.has("13"))
-    t.push("F");
-  if (state.exts.has("13"))
-    t.push("A");
+  if(state.add9 || state.ext!==null) t.push("D");
+  if(state.ext>=11) t.push("F");
+  if(state.ext===13) t.push("A");
 
   return t;
 }
 
-/* ---------- FRETBOARD (대표 보이싱 예시) ---------- */
+/* ---------- FRETBOARD ---------- */
 function drawFretboard(){
-  const svg = document.getElementById("fretboard");
-  svg.innerHTML = "";
+  const svg=document.getElementById("fretboard");
+  svg.innerHTML="";
+  const W=720,H=360,p=50;
+  const strings=6,frets=9;
+  const gx=(W-p*2)/frets;
+  const gy=(H-p*2)/(strings-1);
 
-  const W=720,H=360,pad=50;
-  const strings=6, frets=9;
-  const gapX=(W-pad*2)/frets;
-  const gapY=(H-pad*2)/(strings-1);
+  // string labels (1~6)
+  const labels=["1(e)","2(B)","3(G)","4(D)","5(A)","6(E)"];
+  labels.forEach((l,i)=>{
+    const y=p+i*gy+4;
+    svg.innerHTML+=`<text x="20" y="${y}" class="labelText">${l}</text>`;
+  });
 
   // strings
   for(let s=0;s<strings;s++){
-    const y=pad+s*gapY;
-    svg.innerHTML+=`<line x1="${pad}" x2="${W-pad}" y1="${y}" y2="${y}" class="string"/>`;
+    const y=p+s*gy;
+    svg.innerHTML+=`<line x1="${p}" x2="${W-p}" y1="${y}" y2="${y}" class="string"/>`;
   }
 
   // frets
   for(let f=0;f<=frets;f++){
-    const x=pad+f*gapX;
-    svg.innerHTML+=`<line x1="${x}" x2="${x}" y1="${pad}" y2="${H-pad}" class="fret"/>`;
+    const x=p+f*gx;
+    svg.innerHTML+=`<line x1="${x}" x2="${x}" y1="${p}" y2="${H-p}" class="fret"/>`;
   }
 
-  // example dots (C7 open shape)
-  const dots = [
-    {s:2,f:1,n:1},
+  // example voicing (C7 open)
+  const dots=[
+    {s:1,f:1,n:1},
+    {s:3,f:3,n:4},
     {s:4,f:2,n:2},
-    {s:5,f:3,n:3},
-    {s:3,f:3,n:4}
+    {s:5,f:3,n:3}
   ];
 
   dots.forEach(d=>{
-    const cx=pad+(d.f-0.5)*gapX;
-    const cy=pad+(d.s-1)*gapY;
+    const cx=p+(d.f-0.5)*gx;
+    const cy=p+(d.s-1)*gy;
     svg.innerHTML+=`
       <circle cx="${cx}" cy="${cy}" r="14" class="dot"/>
-      <text x="${cx}" y="${cy+1}" class="dotText">${d.n}</text>
-    `;
+      <text x="${cx}" y="${cy+1}" class="dotText">${d.n}</text>`;
   });
 }
 
 /* ---------- RENDER ---------- */
 function render(){
   applyAuto7();
-  document.getElementById("codeName").innerText = chordName();
-  document.getElementById("tones").innerText =
-    "Chord tones: " + chordTones().join(" – ");
+  document.getElementById("codeName").innerText=chordName();
+  document.getElementById("tones").innerText=
+    "Chord tones: "+chordTones().join(" – ");
   drawFretboard();
 }
 
 /* ---------- EVENTS ---------- */
-document.getElementById("majBtn").onclick=()=>{
+majBtn.onclick=()=>{
   state.triad="maj";
   majBtn.classList.add("active");
   minBtn.classList.remove("active");
   render();
 };
-document.getElementById("minBtn").onclick=()=>{
+minBtn.onclick=()=>{
   state.triad="min";
   minBtn.classList.add("active");
   majBtn.classList.remove("active");
@@ -304,16 +233,17 @@ document.querySelectorAll("[data-7]").forEach(b=>{
   };
 });
 
+add9Btn.onclick=()=>{
+  state.add9=!state.add9;
+  add9Btn.classList.toggle("active",state.add9);
+  render();
+};
+
 document.querySelectorAll("[data-ext]").forEach(b=>{
   b.onclick=()=>{
-    const e=b.dataset.ext;
-    if(state.exts.has(e)){
-      state.exts.delete(e);
-      b.classList.remove("active");
-    }else{
-      state.exts.add(e);
-      b.classList.add("active");
-    }
+    state.ext=b.dataset.ext;
+    document.querySelectorAll("[data-ext]").forEach(x=>x.classList.remove("active"));
+    b.classList.add("active");
     render();
   };
 });
