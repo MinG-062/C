@@ -1,204 +1,515 @@
-function renderFretboard(vo){
-  // vo.shape는 [E, A, D, G, B, e] 순서로 들어옴(저음→고음)
-  // 화면은 위→아래: e B G D A E (고음→저음) 으로 보여줘야 함
-  const shapeLowToHigh = vo.shape;
-  const fingersLowToHigh = vo.fingers || [0,0,0,0,0,0];
-
-  // 화면용(고음→저음)으로 뒤집기
-  const shape = [...shapeLowToHigh].reverse();     // [e, B, G, D, A, E]
-  const fingers = [...fingersLowToHigh].reverse(); // [e..E]
-
-  // 표시 프렛 범위 결정
-  const fretted = shape
-    .filter(x => x !== "X" && x !== 0)
-    .map(x => Number(x));
-  const minF = fretted.length ? Math.min(...fretted) : 1;
-  const maxF = fretted.length ? Math.max(...fretted) : 4;
-
-  const startFret = (maxF <= 4) ? 1 : minF;
-  const fretCount = 5;
-  const endFret = startFret + fretCount - 1;
-
-  // SVG geometry
-  const W = 720, H = 320;
-  const padL = 64, padR = 26, padT = 56, padB = 34;
-
-  const gridW = W - padL - padR;
-  const gridH = H - padT - padB;
-
-  const strings = 6;
-
-  // ✅ 줄은 위→아래로 내려가야 하므로 "세로 간격"을 strings 기준으로
-  const stringGapY = gridH / (strings - 1);
-
-  // ✅ 프렛은 왼→오로 증가하므로 "가로 간격"을 fretCount 기준으로
-  const fretGapX = gridW / fretCount;
-
-  // 좌표 변환
-  const sy = (i) => padT + i * stringGapY;     // string y (0..5) : 0이 1번줄(e)
-  const fx = (f) => padL + f * fretGapX;       // fret line x (0..fretCount)
-
-  const ns = "http://www.w3.org/2000/svg";
-  const svg = document.createElementNS(ns,"svg");
-  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
-
-  // 프렛(세로선) - 왼쪽이 nut/1fr 영역
-  for (let f=0; f<=fretCount; f++){
-    const x = fx(f);
-    const line = document.createElementNS(ns,"line");
-    line.setAttribute("x1", x);
-    line.setAttribute("x2", x);
-    line.setAttribute("y1", padT);
-    line.setAttribute("y2", padT + gridH);
-    line.setAttribute("stroke", "rgba(232,234,240,.22)");
-    line.setAttribute("stroke-width", (startFret===1 && f===0) ? "5" : "2"); // nut 두껍게
-    line.setAttribute("stroke-linecap", "round");
-    svg.appendChild(line);
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>C Chord Badge</title>
+<style>
+  :root{
+    --line:#242837; --text:#e8eaf0; --muted:#a7adbb;
+    --accent:#8bf5c1; --warn:#ffd166;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:transparent; color:var(--text);
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, "Apple SD Gothic Neo", "Noto Sans KR", Arial;
+  }
+  .wrap{padding:14px}
+  .card{
+    background:linear-gradient(180deg,rgba(18,20,26,.95),rgba(18,20,26,.75));
+    border:1px solid var(--line);
+    border-radius:18px;
+    padding:16px;
+    box-shadow: 0 10px 34px rgba(0,0,0,.36);
+    backdrop-filter: blur(10px);
   }
 
-  // 줄(가로선)
-  for (let s=0; s<strings; s++){
-    const y = sy(s);
-    const line = document.createElementNS(ns,"line");
-    line.setAttribute("x1", padL);
-    line.setAttribute("x2", padL + gridW);
-    line.setAttribute("y1", y);
-    line.setAttribute("y2", y);
-    line.setAttribute("stroke", "rgba(232,234,240,.18)");
-    line.setAttribute("stroke-width", "2");
-    line.setAttribute("stroke-linecap", "round");
-    svg.appendChild(line);
+  .top{
+    display:flex; justify-content:space-between; align-items:flex-end;
+    gap:10px; flex-wrap:wrap; margin-bottom:12px;
+  }
+  .title{
+    font-size:22px; font-weight:900; letter-spacing:.2px;
+  }
+  .subtitle{font-size:12px; color:var(--muted); margin-top:4px}
+
+  .grid{
+    display:grid;
+    grid-template-columns: 1fr 260px;
+    gap:12px;
+    align-items:stretch;
+  }
+  @media (max-width: 860px){
+    .grid{grid-template-columns:1fr}
   }
 
-  // 줄 라벨 (위→아래: e B G D A E)
-  const labels = ["e","B","G","D","A","E"];
-  for (let s=0;s<strings;s++){
-    const t = document.createElementNS(ns,"text");
-    t.setAttribute("x", String(padL - 28));
-    t.setAttribute("y", String(sy(s) + 5));
-    t.setAttribute("fill","rgba(167,173,187,.9)");
-    t.setAttribute("font-size","12");
-    t.setAttribute("font-weight","900");
-    t.textContent = labels[s];
-    svg.appendChild(t);
+  .panel{
+    border:1px solid var(--line);
+    border-radius:16px;
+    background:rgba(0,0,0,.14);
+    padding:12px;
+  }
+  .pill{
+    display:flex; align-items:baseline; justify-content:center; gap:10px;
+    padding:10px 14px;
+    border:1px solid var(--line);
+    border-radius:999px;
+    background:rgba(0,0,0,.18);
+    font-variant-numeric: tabular-nums;
+  }
+  .pill .name{font-size:28px; font-weight:900; letter-spacing:.2px}
+  .pill .type{font-size:12px; color:var(--muted); font-weight:900; letter-spacing:.8px; text-transform:uppercase}
+
+  .section{margin:10px 0}
+  .label{font-size:12px; color:var(--muted); margin-bottom:6px}
+  .options{display:flex; gap:6px; flex-wrap:wrap}
+  .opt{
+    border:1px solid var(--line);
+    background:rgba(0,0,0,.25);
+    color:var(--text);
+    padding:7px 12px;
+    border-radius:999px;
+    font-weight:800;
+    cursor:pointer;
+    user-select:none;
+  }
+  .opt.on{
+    background:rgba(139,245,193,.2);
+    border-color:rgba(139,245,193,.7);
   }
 
-  // 시작 프렛 표기(1fr이 아닐 때)
-  if (startFret !== 1){
-    const t = document.createElementNS(ns,"text");
-    t.setAttribute("x", String(padL));
-    t.setAttribute("y", String(padT - 20));
-    t.setAttribute("fill","rgba(167,173,187,.9)");
-    t.setAttribute("font-size","12");
-    t.setAttribute("font-weight","900");
-    t.textContent = `${startFret}fr`;
-    svg.appendChild(t);
+  .metaRow{
+    margin-top:10px;
+    border:1px solid var(--line);
+    border-radius:12px;
+    background:rgba(0,0,0,.12);
+    padding:10px;
+    font-size:12px;
+    color:var(--muted);
+    line-height:1.55;
   }
 
-  // ✅ 프렛 번호 (왼→오)
-  for (let f=1; f<=fretCount; f++){
-    const num = startFret + (f-1);
-    const t = document.createElementNS(ns,"text");
-    t.setAttribute("x", String(fx(f-0.5)));
-    t.setAttribute("y", String(padT + gridH + 22));
-    t.setAttribute("text-anchor","middle");
-    t.setAttribute("fill","rgba(167,173,187,.75)");
-    t.setAttribute("font-size","11");
-    t.setAttribute("font-weight","800");
-    t.textContent = String(num);
-    svg.appendChild(t);
+  #svgHost{width:100%}
+  svg{display:block; width:100%; height:auto}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div class="top">
+      <div>
+        <div class="title" id="title">C</div>
+        <div class="subtitle">옵션을 눌러 운지(보이싱)가 자동 추천됩니다</div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="panel">
+        <div id="svgHost"></div>
+      </div>
+
+      <div class="panel">
+        <div class="pill">
+          <div class="name" id="pillName">C</div>
+          <div class="type" id="pillType">MAJOR</div>
+        </div>
+
+        <div class="section">
+          <div class="label">Base</div>
+          <div class="options" id="baseOpts"></div>
+        </div>
+
+        <div class="section">
+          <div class="label">Modifiers</div>
+          <div class="options" id="modOpts"></div>
+        </div>
+
+        <div class="metaRow" id="metaText">
+          • X = mute, O = open<br/>
+          • Finger numbers shown on dots<br/>
+          • Barre 표시 지원
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+window.addEventListener("DOMContentLoaded", () => {
+  // ===== UI 옵션 =====
+  const BASES = [
+    { key:"maj", label:"Major" },
+    { key:"min", label:"Minor" },
+    { key:"7",   label:"7" } // ✅ Dominant 대신 7
+  ];
+  const MODS = [
+    { key:"sus4", label:"sus4" },
+    { key:"add9", label:"add9" },
+    { key:"11",   label:"11" },
+    { key:"13",   label:"13" },
+  ];
+
+  // ===== 보이싱 라이브러리 (C 전용) =====
+  // shape는 여전히 [E, A, D, G, B, e] (저음→고음) 기준으로 저장
+  // 화면에서만 1번줄(e)→6번줄(E)로 뒤집어 표시함
+  const VOICINGS = [
+    { id:"C", key:"maj", mods:[], priority:1,
+      shape:["X",3,2,0,1,0],
+      fingers:[0,3,2,0,1,0]
+    },
+    { id:"Cadd9", key:"maj", mods:["add9"], priority:1,
+      shape:["X",3,2,0,3,0],
+      fingers:[0,2,1,0,3,0]
+    },
+    { id:"Csus4", key:"maj", mods:["sus4"], priority:1,
+      shape:["X",3,3,0,1,1],
+      fingers:[0,3,4,0,1,2]
+    },
+    { id:"C7", key:"7", mods:[], priority:1,
+      shape:["X",3,2,3,1,0],
+      fingers:[0,3,2,4,1,0]
+    },
+    { id:"C7sus4", key:"7", mods:["sus4"], priority:1,
+      shape:["X",3,3,3,1,1],
+      fingers:[0,3,4,2,1,1],
+      barre:{ fret:1, from:4, to:5, finger:1 } // B~e 1프렛 바레
+    },
+    { id:"C13", key:"7", mods:["13"], priority:1,
+      shape:["X",3,2,3,5,5],
+      fingers:[0,2,1,3,4,4],
+      barre:{ fret:5, from:4, to:5, finger:4 } // B~e 5프렛 바레(새끼로 처리)
+    },
+    { id:"C11", key:"7", mods:["11"], priority:1,
+      shape:["X",3,3,3,1,1],
+      fingers:[0,3,4,2,1,1],
+      barre:{ fret:1, from:4, to:5, finger:1 }
+    },
+    { id:"Cm", key:"min", mods:[], priority:1,
+      shape:["X",3,5,5,4,3],
+      fingers:[0,1,3,4,2,1],
+      barre:{ fret:3, from:1, to:5, finger:1 } // A~e 3프렛 바레
+    },
+    { id:"Cm11", key:"min", mods:["11"], priority:1,
+      shape:["X",3,5,3,4,3],
+      fingers:[0,1,3,1,2,1],
+      barre:{ fret:3, from:1, to:5, finger:1 }
+    },
+    { id:"Cmadd9", key:"min", mods:["add9"], priority:2,
+      shape:["X",3,5,3,3,3],
+      fingers:[0,1,3,1,1,1],
+      barre:{ fret:3, from:1, to:5, finger:1 }
+    },
+  ];
+
+  // ===== 상태 =====
+  let base = "maj";
+  let mods = new Set();
+
+  // ===== DOM =====
+  const baseBox = document.getElementById("baseOpts");
+  const modBox  = document.getElementById("modOpts");
+  const titleEl = document.getElementById("title");
+  const pillName= document.getElementById("pillName");
+  const pillType= document.getElementById("pillType");
+  const metaText= document.getElementById("metaText");
+  const svgHost = document.getElementById("svgHost");
+
+  // ===== 버튼 생성 =====
+  BASES.forEach(b => {
+    const btn = document.createElement("div");
+    btn.className = "opt" + (b.key===base ? " on" : "");
+    btn.textContent = b.label;
+    btn.addEventListener("click", () => {
+      base = b.key;
+      [...baseBox.children].forEach(x => x.classList.remove("on"));
+      btn.classList.add("on");
+      render();
+    });
+    baseBox.appendChild(btn);
+  });
+
+  MODS.forEach(m => {
+    const btn = document.createElement("div");
+    btn.className = "opt";
+    btn.textContent = m.label;
+    btn.addEventListener("click", () => {
+      if (mods.has(m.key)) mods.delete(m.key);
+      else mods.add(m.key);
+      btn.classList.toggle("on");
+      render();
+    });
+    modBox.appendChild(btn);
+  });
+
+  // ===== 유틸 =====
+  function arrayEq(a,b){
+    if (a.length !== b.length) return false;
+    for (let i=0;i<a.length;i++) if (a[i] !== b[i]) return false;
+    return true;
+  }
+  function intersectionCount(a,b){
+    const s = new Set(a);
+    let c = 0;
+    for (const x of b) if (s.has(x)) c++;
+    return c;
   }
 
-  // X / O 표시 (nut 왼쪽 위가 아니라, 각 줄의 "프렛 0 영역" 위에)
-  for (let s=0; s<strings; s++){
-    const v = shape[s];
-    if (v !== "X" && v !== 0) continue;
+  // ===== 보이싱 자동 추천 =====
+  function selectVoicing(){
+    const wanted = [...mods].sort();
 
-    const t = document.createElementNS(ns,"text");
-    t.setAttribute("x", String(padL - 18));
-    t.setAttribute("y", String(sy(s) + 5));
-    t.setAttribute("text-anchor","middle");
-    t.setAttribute("font-size","14");
-    t.setAttribute("font-weight","900");
-    t.setAttribute("fill", v==="X" ? "rgba(255,209,102,.95)" : "rgba(139,245,193,.95)");
-    t.textContent = (v==="X") ? "X" : "O";
-    svg.appendChild(t);
+    const exact = VOICINGS
+      .filter(v => v.key === base)
+      .filter(v => arrayEq(v.mods.slice().sort(), wanted))
+      .sort((a,b) => a.priority - b.priority);
+
+    if (exact.length) return exact[0];
+
+    const candidates = VOICINGS
+      .filter(v => v.key === base)
+      .map(v => ({ v, score: intersectionCount(v.mods, wanted) }))
+      .sort((a,b) => (b.score - a.score) || (a.v.priority - b.v.priority));
+
+    if (candidates.length && candidates[0].score > 0) return candidates[0].v;
+
+    const baseOnly = VOICINGS
+      .filter(v => v.key === base && v.mods.length === 0)
+      .sort((a,b) => a.priority - b.priority);
+
+    return baseOnly[0] || VOICINGS[0];
   }
 
-  // Barre (캡슐) - 좌우로 눌러서 표시
-  if (vo.barre){
-    // barre는 원래 low-to-high 기준(from/to)이 들어있으니 화면 기준으로 변환
-    // low-to-high index: 0(E)..5(e)
-    // 화면 index: 0(e)..5(E) => screen = 5 - original
-    const { fret, from, to, finger } = vo.barre;
-    const fromS = 5 - from;
-    const toS   = 5 - to;
+  // ===== 코드명 생성 =====
+  function chordName(){
+    let name = "C";
+    if (base === "min") name += "m";
+    if (base === "7") name += "7";
+    if (mods.has("sus4")) name += "sus4";
+    if (mods.has("add9")) name += "add9";
+    if (mods.has("11")) name += "11";
+    if (mods.has("13")) name += "13";
+    return name;
+  }
 
-    if (fret >= startFret && fret <= endFret){
-      const localF = fret - startFret; // 0..4
-      // 프렛 칸 중앙 x
-      const cx = fx(localF) + fretGapX/2;
+  // ===== SVG 지판 렌더 (요청 방향 반영) =====
+  function renderFretboard(vo){
+    // 저장된 shape는 [E, A, D, G, B, e] (저음→고음)
+    // 화면은 위→아래: 1번줄(e) → 6번줄(E)
+    const shape = [...vo.shape].reverse();     // [e, B, G, D, A, E]
+    const fingers = [...(vo.fingers || [0,0,0,0,0,0])].reverse();
 
-      const y1 = sy(Math.min(fromS,toS));
-      const y2 = sy(Math.max(fromS,toS));
+    // 프렛 범위 계산(열 방향)
+    const fretted = shape
+      .filter(x => x !== "X" && x !== 0)
+      .map(x => Number(x));
+    const minF = fretted.length ? Math.min(...fretted) : 1;
+    const maxF = fretted.length ? Math.max(...fretted) : 4;
 
-      const rect = document.createElementNS(ns,"rect");
-      rect.setAttribute("x", String(cx - 13));
-      rect.setAttribute("y", String(y1 - 14));
-      rect.setAttribute("width", "26");
-      rect.setAttribute("height", String((y2 - y1) + 28));
-      rect.setAttribute("rx","13");
-      rect.setAttribute("fill","rgba(255,209,102,.18)");
-      rect.setAttribute("stroke","rgba(255,209,102,.55)");
-      rect.setAttribute("stroke-width","2");
-      svg.appendChild(rect);
+    const startFret = (maxF <= 4) ? 1 : minF;
+    const fretCount = 5;
+    const endFret = startFret + fretCount - 1;
 
-      const txt = document.createElementNS(ns,"text");
-      txt.setAttribute("x", String(cx));
-      txt.setAttribute("y", String(y1 - 20));
-      txt.setAttribute("text-anchor","middle");
-      txt.setAttribute("fill","rgba(255,209,102,.95)");
-      txt.setAttribute("font-size","12");
-      txt.setAttribute("font-weight","900");
-      txt.textContent = String(finger);
-      svg.appendChild(txt);
+    const W = 760, H = 340;
+    const padL = 90, padR = 24, padT = 52, padB = 44;
+
+    const gridW = W - padL - padR;
+    const gridH = H - padT - padB;
+
+    const strings = 6;
+    const stringGapY = gridH / (strings - 1);
+    const fretGapX = gridW / fretCount;
+
+    const sy = (i) => padT + i * stringGapY; // i=0이 1번줄(e)
+    const fx = (f) => padL + f * fretGapX;   // f=0이 nut, 오른쪽으로 증가
+
+    const ns = "http://www.w3.org/2000/svg";
+    const svg = document.createElementNS(ns,"svg");
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+
+    // 프렛(세로선)
+    for (let f=0; f<=fretCount; f++){
+      const x = fx(f);
+      const line = document.createElementNS(ns,"line");
+      line.setAttribute("x1", x);
+      line.setAttribute("x2", x);
+      line.setAttribute("y1", padT);
+      line.setAttribute("y2", padT + gridH);
+      line.setAttribute("stroke", "rgba(232,234,240,.22)");
+      line.setAttribute("stroke-width", (startFret===1 && f===0) ? "6" : "2");
+      line.setAttribute("stroke-linecap", "round");
+      svg.appendChild(line);
     }
-  }
 
-  // Finger dots + numbers
-  for (let s=0; s<strings; s++){
-    const v = shape[s];
-    if (v==="X" || v===0) continue;
+    // 줄(가로선)
+    for (let s=0; s<strings; s++){
+      const y = sy(s);
+      const line = document.createElementNS(ns,"line");
+      line.setAttribute("x1", padL);
+      line.setAttribute("x2", padL + gridW);
+      line.setAttribute("y1", y);
+      line.setAttribute("y2", y);
+      line.setAttribute("stroke", "rgba(232,234,240,.18)");
+      line.setAttribute("stroke-width", "2");
+      line.setAttribute("stroke-linecap", "round");
+      svg.appendChild(line);
+    }
 
-    const fret = Number(v);
-    if (fret < startFret || fret > endFret) continue;
-
-    const localF = fret - startFret;
-    const cx = fx(localF) + fretGapX/2;
-    const cy = sy(s);
-
-    const dot = document.createElementNS(ns,"circle");
-    dot.setAttribute("cx", String(cx));
-    dot.setAttribute("cy", String(cy));
-    dot.setAttribute("r", "13");
-    dot.setAttribute("fill", "rgba(139,245,193,.92)");
-    dot.setAttribute("stroke", "rgba(0,0,0,.25)");
-    dot.setAttribute("stroke-width", "2");
-    svg.appendChild(dot);
-
-    const fnum = Number(fingers[s] || 0);
-    if (fnum > 0){
+    // 줄 라벨(위→아래)
+    const labels = ["1(e)","2(B)","3(G)","4(D)","5(A)","6(E)"];
+    for (let s=0; s<strings; s++){
       const t = document.createElementNS(ns,"text");
-      t.setAttribute("x", String(cx));
-      t.setAttribute("y", String(cy + 5));
-      t.setAttribute("text-anchor","middle");
-      t.setAttribute("fill", "rgba(0,0,0,.75)");
-      t.setAttribute("font-size","13");
+      t.setAttribute("x", String(padL - 56));
+      t.setAttribute("y", String(sy(s) + 5));
+      t.setAttribute("fill","rgba(167,173,187,.9)");
+      t.setAttribute("font-size","12");
       t.setAttribute("font-weight","900");
-      t.textContent = String(fnum);
+      t.textContent = labels[s];
       svg.appendChild(t);
     }
+
+    // 시작 프렛 표기
+    if (startFret !== 1){
+      const t = document.createElementNS(ns,"text");
+      t.setAttribute("x", String(padL));
+      t.setAttribute("y", String(padT - 18));
+      t.setAttribute("fill","rgba(167,173,187,.9)");
+      t.setAttribute("font-size","12");
+      t.setAttribute("font-weight","900");
+      t.textContent = `${startFret}fr`;
+      svg.appendChild(t);
+    }
+
+    // 프렛 번호 (왼→오)
+    for (let f=1; f<=fretCount; f++){
+      const num = startFret + (f-1);
+      const t = document.createElementNS(ns,"text");
+      t.setAttribute("x", String(fx(f-0.5)));
+      t.setAttribute("y", String(padT + gridH + 28));
+      t.setAttribute("text-anchor","middle");
+      t.setAttribute("fill","rgba(167,173,187,.75)");
+      t.setAttribute("font-size","11");
+      t.setAttribute("font-weight","800");
+      t.textContent = String(num);
+      svg.appendChild(t);
+    }
+
+    // X / O 표시 (각 줄 왼쪽)
+    for (let s=0; s<strings; s++){
+      const v = shape[s];
+      if (v !== "X" && v !== 0) continue;
+
+      const t = document.createElementNS(ns,"text");
+      t.setAttribute("x", String(padL - 16));
+      t.setAttribute("y", String(sy(s) + 5));
+      t.setAttribute("text-anchor","middle");
+      t.setAttribute("font-size","14");
+      t.setAttribute("font-weight","900");
+      t.setAttribute("fill", v==="X" ? "rgba(255,209,102,.95)" : "rgba(139,245,193,.95)");
+      t.textContent = (v==="X") ? "X" : "O";
+      svg.appendChild(t);
+    }
+
+    // Barre (세로로 긴 캡슐: 같은 프렛을 여러 줄에서 누르는 형태)
+    if (vo.barre){
+      // barre는 저장 기준이 low-to-high: 0(E)..5(e)
+      // 화면 기준은 0(e)..5(E) 이므로 index 변환: screen = 5 - original
+      const { fret, from, to, finger } = vo.barre;
+      const fromS = 5 - from;
+      const toS   = 5 - to;
+
+      if (fret >= startFret && fret <= endFret){
+        const localF = fret - startFret; // 0..4
+        const cx = fx(localF) + fretGapX/2;
+
+        const y1 = sy(Math.min(fromS,toS));
+        const y2 = sy(Math.max(fromS,toS));
+
+        const rect = document.createElementNS(ns,"rect");
+        rect.setAttribute("x", String(cx - 14));
+        rect.setAttribute("y", String(y1 - 14));
+        rect.setAttribute("width", "28");
+        rect.setAttribute("height", String((y2 - y1) + 28));
+        rect.setAttribute("rx","14");
+        rect.setAttribute("fill","rgba(255,209,102,.18)");
+        rect.setAttribute("stroke","rgba(255,209,102,.55)");
+        rect.setAttribute("stroke-width","2");
+        svg.appendChild(rect);
+
+        const txt = document.createElementNS(ns,"text");
+        txt.setAttribute("x", String(cx));
+        txt.setAttribute("y", String(y1 - 22));
+        txt.setAttribute("text-anchor","middle");
+        txt.setAttribute("fill","rgba(255,209,102,.95)");
+        txt.setAttribute("font-size","12");
+        txt.setAttribute("font-weight","900");
+        txt.textContent = `barre ${finger}`;
+        svg.appendChild(txt);
+      }
+    }
+
+    // Finger dots + numbers (칸 중앙에 표시)
+    for (let s=0; s<strings; s++){
+      const v = shape[s];
+      if (v==="X" || v===0) continue;
+
+      const fret = Number(v);
+      if (fret < startFret || fret > endFret) continue;
+
+      const localF = fret - startFret;
+      const cx = fx(localF) + fretGapX/2;
+      const cy = sy(s);
+
+      const dot = document.createElementNS(ns,"circle");
+      dot.setAttribute("cx", String(cx));
+      dot.setAttribute("cy", String(cy));
+      dot.setAttribute("r", "14");
+      dot.setAttribute("fill", "rgba(139,245,193,.92)");
+      dot.setAttribute("stroke", "rgba(0,0,0,.25)");
+      dot.setAttribute("stroke-width", "2");
+      svg.appendChild(dot);
+
+      const fnum = Number(fingers[s] || 0);
+      if (fnum > 0){
+        const t = document.createElementNS(ns,"text");
+        t.setAttribute("x", String(cx));
+        t.setAttribute("y", String(cy + 5));
+        t.setAttribute("text-anchor","middle");
+        t.setAttribute("fill", "rgba(0,0,0,.78)");
+        t.setAttribute("font-size","13");
+        t.setAttribute("font-weight","900");
+        t.textContent = String(fnum);
+        svg.appendChild(t);
+      }
+    }
+
+    return svg;
   }
 
-  return svg;
-}
+  // ===== 렌더 =====
+  function render(){
+    const vo = selectVoicing();
+    const name = chordName();
+
+    titleEl.textContent = name;
+    pillName.textContent = "C";
+    pillType.textContent = (name.replace(/^C/, "") || "MAJOR").toUpperCase();
+
+    let barreInfo = "";
+    if (vo.barre){
+      barreInfo = `• Barre: finger ${vo.barre.finger} @ ${vo.barre.fret}fr<br/>`;
+    }
+    metaText.innerHTML =
+      `• Recommended voicing: <b>${vo.id}</b><br/>` +
+      barreInfo +
+      `• X = mute, O = open<br/>` +
+      `• Finger numbers shown on dots`;
+
+    svgHost.innerHTML = "";
+    svgHost.appendChild(renderFretboard(vo));
+  }
+
+  render();
+});
+</script>
+</body>
+</html>
