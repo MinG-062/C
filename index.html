@@ -1,117 +1,176 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta charset="UTF-8" />
 <title>C Chord Badge</title>
 <style>
-  :root{
-    --line:#242837; --text:#e8eaf0; --muted:#a7adbb;
-    --accent:#8bf5c1; --warn:#ffd166;
-  }
-  *{box-sizing:border-box}
-  body{
-    margin:0; background:transparent; color:var(--text);
-    font-family: system-ui, -apple-system, Segoe UI, Roboto, "Apple SD Gothic Neo", "Noto Sans KR", Arial;
-  }
-  .wrap{padding:14px}
-  .card{
-    background:linear-gradient(180deg,rgba(18,20,26,.95),rgba(18,20,26,.75));
-    border:1px solid var(--line);
-    border-radius:18px;
-    padding:16px;
-    box-shadow: 0 10px 34px rgba(0,0,0,.36);
-    backdrop-filter: blur(10px);
-  }
-  .top{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;flex-wrap:wrap;margin-bottom:12px}
-  .title{font-size:22px;font-weight:900;letter-spacing:.2px}
-  .subtitle{font-size:12px;color:var(--muted);margin-top:4px}
-
-  .grid{display:grid;grid-template-columns:1fr 280px;gap:12px;align-items:stretch}
-  @media (max-width: 860px){.grid{grid-template-columns:1fr}}
-
-  .panel{
-    border:1px solid var(--line);
-    border-radius:16px;
-    background:rgba(0,0,0,.14);
-    padding:12px;
-  }
-  .pill{
-    display:flex;align-items:baseline;justify-content:center;gap:10px;
-    padding:10px 14px;border:1px solid var(--line);border-radius:999px;
-    background:rgba(0,0,0,.18);
-    font-variant-numeric:tabular-nums;
-  }
-  .pill .name{font-size:28px;font-weight:900;letter-spacing:.2px}
-  .pill .type{font-size:14px;color:rgba(232,234,240,.85);font-weight:900;letter-spacing:.2px}
-
-  .section{margin:10px 0}
-  .label{font-size:12px;color:var(--muted);margin-bottom:6px}
-  .options{display:flex;gap:6px;flex-wrap:wrap}
-  .opt{
-    border:1px solid var(--line);
-    background:rgba(0,0,0,.25);
-    color:var(--text);
-    padding:7px 12px;border-radius:999px;
-    font-weight:800;cursor:pointer;user-select:none;
-  }
-  .opt.on{background:rgba(139,245,193,.2);border-color:rgba(139,245,193,.7)}
-  .opt.disabled{opacity:.45; cursor:not-allowed; filter: grayscale(40%)}
-
-  .metaRow{
-    margin-top:10px;border:1px solid var(--line);border-radius:12px;
-    background:rgba(0,0,0,.12);padding:10px;font-size:12px;color:var(--muted);line-height:1.55
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, sans-serif;
+    background: #0f1115;
+    color: #e6e9ef;
   }
 
-  #svgHost{width:100%}
-  svg{display:block;width:100%;height:auto}
+  .wrap {
+    max-width: 980px;
+    margin: 40px auto;
+    padding: 24px;
+    background: linear-gradient(180deg,#1b1f27,#141821);
+    border-radius: 18px;
+    box-shadow: 0 30px 80px rgba(0,0,0,.45);
+  }
+
+  h1 {
+    margin: 0 0 6px;
+    font-size: 28px;
+  }
+
+  .sub {
+    opacity: .65;
+    font-size: 13px;
+    margin-bottom: 18px;
+  }
+
+  .main {
+    display: grid;
+    grid-template-columns: 1fr 280px;
+    gap: 20px;
+  }
+
+  /* ---------- FRETBOARD ---------- */
+
+  svg {
+    width: 100%;
+    height: 360px;
+    background: radial-gradient(120% 120% at 50% 0%, #242a35, #151a22);
+    border-radius: 14px;
+  }
+
+  .string {
+    stroke: rgba(255,255,255,.25);
+    stroke-width: 2;
+  }
+
+  .fret {
+    stroke: rgba(255,255,255,.15);
+    stroke-width: 2;
+  }
+
+  .dot {
+    fill: #7ef0c4;
+    stroke: rgba(0,0,0,.4);
+    stroke-width: 2;
+  }
+
+  .dotText {
+    fill: #0c1b14;
+    font-size: 14px;
+    font-weight: 900;
+    text-anchor: middle;
+    dominant-baseline: middle;
+  }
+
+  .open {
+    fill: none;
+    stroke: #7ef0c4;
+    stroke-width: 3;
+  }
+
+  .mute {
+    fill: #f0c46a;
+    font-weight: 900;
+  }
+
+  /* ---------- CONTROLS ---------- */
+
+  .panel {
+    background: rgba(255,255,255,.04);
+    border-radius: 14px;
+    padding: 16px;
+  }
+
+  .codeName {
+    font-size: 28px;
+    font-weight: 900;
+    margin-bottom: 6px;
+  }
+
+  .tones {
+    font-size: 13px;
+    opacity: .75;
+    margin-bottom: 14px;
+  }
+
+  .section {
+    margin-bottom: 14px;
+  }
+
+  .label {
+    font-size: 12px;
+    opacity: .6;
+    margin-bottom: 6px;
+  }
+
+  .btns {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  button {
+    background: #222834;
+    color: #e6e9ef;
+    border: none;
+    border-radius: 999px;
+    padding: 7px 12px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+
+  button.active {
+    background: #7ef0c4;
+    color: #0c1b14;
+    font-weight: 800;
+  }
 </style>
 </head>
+
 <body>
 <div class="wrap">
-  <div class="card">
-    <div class="top">
-      <div>
-        <div class="title" id="title">C</div>
-        <div class="subtitle">Triad(메이저/마이너) + 7th(없음/♭7/M7) 조합</div>
+  <h1 id="title">C</h1>
+  <div class="sub">Triad + 7th + Extensions 구조</div>
+
+  <div class="main">
+    <svg id="fretboard" viewBox="0 0 720 360"></svg>
+
+    <div class="panel">
+      <div class="codeName" id="codeName">C</div>
+      <div class="tones" id="tones"></div>
+
+      <div class="section">
+        <div class="label">Triad</div>
+        <div class="btns">
+          <button id="majBtn" class="active">Major</button>
+          <button id="minBtn">Minor</button>
+        </div>
       </div>
-    </div>
 
-    <div class="grid">
-      <div class="panel">
-        <div id="svgHost"></div>
+      <div class="section">
+        <div class="label">7th</div>
+        <div class="btns">
+          <button data-7="none" class="active">없음</button>
+          <button data-7="b7">♭7</button>
+          <button data-7="M7">M7</button>
+        </div>
       </div>
 
-      <div class="panel">
-        <div class="pill">
-          <div class="name" id="pillName">C</div>
-          <div class="type" id="pillType"></div>
-        </div>
-
-        <div class="section">
-          <div class="label">Triad</div>
-          <div class="options" id="triadOpts"></div>
-        </div>
-
-        <div class="section">
-          <div class="label">7th</div>
-          <div class="options" id="sevOpts"></div>
-        </div>
-
-        <div class="section">
-          <div class="label">Modifiers</div>
-          <div class="options" id="modOpts"></div>
-        </div>
-
-        <div class="section">
-          <div class="label">Extensions</div>
-          <div class="options" id="extOpts"></div>
-        </div>
-
-        <div class="metaRow" id="metaText">
-          • X = mute, O = open<br/>
-          • Finger numbers shown on dots<br/>
-          • Barre 표시 지원
+      <div class="section">
+        <div class="label">Extensions</div>
+        <div class="btns">
+          <button data-ext="add9">add9</button>
+          <button data-ext="9">9</button>
+          <button data-ext="11">11</button>
+          <button data-ext="13">13</button>
         </div>
       </div>
     </div>
@@ -119,387 +178,147 @@
 </div>
 
 <script>
-window.addEventListener("DOMContentLoaded", () => {
-  const TRIADS = [
-    { key:"maj", label:"Major" },
-    { key:"min", label:"Minor" },
-  ];
-  const SEVENTHS = [
-    { key:"none", label:"없음" },
-    { key:"b7",   label:"b7" },
-    { key:"M7",   label:"M7" },
-  ];
-  const MODS = [{ key:"sus4", label:"sus4" }];
-  const EXTS = [
-    { key:"add9", label:"add9" },
-    { key:"11",   label:"11" },
-    { key:"13",   label:"13" },
-  ];
+/* ---------- STATE ---------- */
+const state = {
+  triad: "maj",      // maj | min
+  seventh: "none",   // none | b7 | M7
+  exts: new Set()
+};
 
-  // shape: [E, A, D, G, B, e] (저음→고음)
-  // barre: {fret, from, to, finger}  (from/to: 0(E)..5(e))
-  const VOICINGS = [
-    { id:"C", quality:"maj", mods:[], exts:[], priority:1,
-      shape:["X",3,2,0,1,0], fingers:[0,3,2,0,1,0]
-    },
-    { id:"Cm", quality:"min", mods:[], exts:[], priority:1,
-      shape:["X",3,5,5,4,3], fingers:[0,1,3,4,2,1],
-      barre:{fret:3, from:1, to:5, finger:1}
-    },
+/* ---------- NOTES ---------- */
+const NOTES = ["C","C#","D","Eb","E","F","F#","G","Ab","A","Bb","B"];
 
-    { id:"C7", quality:"dom7", mods:[], exts:[], priority:1,
-      shape:["X",3,2,3,1,0], fingers:[0,3,2,4,1,0]
-    },
-    { id:"CM7", quality:"maj7", mods:[], exts:[], priority:1,
-      shape:["X",3,2,0,0,0], fingers:[0,3,2,0,0,0]
-    },
-    { id:"Cm7", quality:"min7", mods:[], exts:[], priority:1,
-      shape:["X",3,5,3,4,3], fingers:[0,1,3,1,2,1],
-      barre:{fret:3, from:1, to:5, finger:1}
-    },
-    { id:"CmM7", quality:"minMaj7", mods:[], exts:[], priority:1,
-      shape:["X",3,5,4,4,3], fingers:[0,1,4,2,3,1],
-      barre:{fret:3, from:1, to:5, finger:1}
-    },
-
-    { id:"Csus4", quality:"maj", mods:["sus4"], exts:[], priority:1,
-      shape:["X",3,3,0,1,1], fingers:[0,3,4,0,1,2]
-    },
-    { id:"C7sus4", quality:"dom7", mods:["sus4"], exts:[], priority:1,
-      shape:["X",3,3,3,1,1], fingers:[0,3,4,2,1,1],
-      barre:{fret:1, from:4, to:5, finger:1}
-    },
-
-    { id:"Cadd9", quality:"maj", mods:[], exts:["add9"], priority:1,
-      shape:["X",3,2,0,3,0], fingers:[0,2,1,0,3,0]
-    },
-    { id:"C11", quality:"dom7", mods:[], exts:["11"], priority:1,
-      shape:["X",3,3,3,1,1], fingers:[0,3,4,2,1,1],
-      barre:{fret:1, from:4, to:5, finger:1}
-    },
-    { id:"C13", quality:"dom7", mods:[], exts:["13"], priority:1,
-      shape:["X",3,2,3,5,5], fingers:[0,2,1,3,4,4],
-      barre:{fret:5, from:4, to:5, finger:4}
-    },
-  ];
-
-  const state = {
-    root:"C",
-    triad:"maj",      // maj|min
-    seventh:"none",   // none|b7|M7
-    mods:new Set(),
-    exts:new Set(),
-  };
-
-  const triadBox=document.getElementById("triadOpts");
-  const sevBox=document.getElementById("sevOpts");
-  const modBox=document.getElementById("modOpts");
-  const extBox=document.getElementById("extOpts");
-  const titleEl=document.getElementById("title");
-  const pillName=document.getElementById("pillName");
-  const pillType=document.getElementById("pillType");
-  const metaText=document.getElementById("metaText");
-  const svgHost=document.getElementById("svgHost");
-
-  const sortArr = (it)=>[...it].slice().sort();
-  const eqArr = (a,b)=>a.length===b.length && a.every((v,i)=>v===b[i]);
-  const intersectCount=(a,b)=>{const s=new Set(a);let c=0;for(const x of b) if(s.has(x)) c++;return c;}
-
-  function qualityKey(){
-    const t=state.triad, s=state.seventh;
-    if(t==="maj" && s==="none") return "maj";
-    if(t==="min" && s==="none") return "min";
-    if(t==="maj" && s==="b7")   return "dom7";
-    if(t==="maj" && s==="M7")   return "maj7";
-    if(t==="min" && s==="b7")   return "min7";
-    if(t==="min" && s==="M7")   return "minMaj7";
-    return "maj";
-  }
-
-  // ✅ 최종 표기: Minor는 소문자 m
-  function chordName(){
-    let name = state.root;
-    if(state.triad==="min") name += "m";
-    if(state.seventh==="b7") name += "7";
-    if(state.seventh==="M7") name += "M7";
-    if(state.mods.has("sus4")) name += "sus4";
-    if(state.exts.has("add9")) name += "add9";
-    if(state.exts.has("11")) name += "11";
-    if(state.exts.has("13")) name += "13";
-    return name;
-  }
-
-  function makeRadioButtons(container, items, getter, setter){
-    container.innerHTML="";
-    items.forEach(item=>{
-      const btn=document.createElement("div");
-      btn.className="opt"+(getter()===item.key?" on":"");
-      btn.textContent=item.label;
-      btn.addEventListener("click",()=>{
-        setter(item.key);
-        [...container.children].forEach(x=>x.classList.remove("on"));
-        btn.classList.add("on");
-        render();
-      });
-      container.appendChild(btn);
+/* ---------- AUTO 7 RULE ---------- */
+function applyAuto7(){
+  if (state.exts.has("9") || state.exts.has("11") || state.exts.has("13")) {
+    state.seventh = "b7";
+    document.querySelectorAll("[data-7]").forEach(b=>{
+      b.classList.toggle("active", b.dataset["7"]==="b7");
     });
   }
+}
 
-  function makeToggleButtons(container, items, setRef){
-    container.innerHTML="";
-    items.forEach(item=>{
-      const btn=document.createElement("div");
-      btn.className="opt"+(setRef.has(item.key)?" on":"");
-      btn.textContent=item.label;
-      btn.addEventListener("click",()=>{
-        if(btn.classList.contains("disabled")) return;
-        if(setRef.has(item.key)) setRef.delete(item.key);
-        else setRef.add(item.key);
-        btn.classList.toggle("on");
-        render();
-      });
-      container.appendChild(btn);
-    });
+/* ---------- CHORD NAME ---------- */
+function chordName(){
+  let n = "C";
+  if (state.triad === "min") n += "m";
+  if (state.seventh === "b7") n += "7";
+  if (state.seventh === "M7") n += "M7";
+
+  state.exts.forEach(e=>{
+    if (e==="add9") n += "add9";
+    else n += e;
+  });
+  return n;
+}
+
+/* ---------- CHORD TONES ---------- */
+function chordTones(){
+  const t = [];
+  t.push("C");
+  t.push(state.triad==="min" ? "Eb" : "E");
+  t.push("G");
+
+  if (state.seventh==="b7") t.push("Bb");
+  if (state.seventh==="M7") t.push("B");
+
+  if (state.exts.has("add9") || state.exts.has("9") || state.exts.has("11") || state.exts.has("13"))
+    t.push("D");
+  if (state.exts.has("11") || state.exts.has("13"))
+    t.push("F");
+  if (state.exts.has("13"))
+    t.push("A");
+
+  return t;
+}
+
+/* ---------- FRETBOARD (대표 보이싱 예시) ---------- */
+function drawFretboard(){
+  const svg = document.getElementById("fretboard");
+  svg.innerHTML = "";
+
+  const W=720,H=360,pad=50;
+  const strings=6, frets=9;
+  const gapX=(W-pad*2)/frets;
+  const gapY=(H-pad*2)/(strings-1);
+
+  // strings
+  for(let s=0;s<strings;s++){
+    const y=pad+s*gapY;
+    svg.innerHTML+=`<line x1="${pad}" x2="${W-pad}" y1="${y}" y2="${y}" class="string"/>`;
   }
 
-  makeRadioButtons(triadBox, TRIADS, ()=>state.triad, (v)=>{state.triad=v;});
-  makeRadioButtons(sevBox, SEVENTHS, ()=>state.seventh, (v)=>{state.seventh=v;});
-  makeToggleButtons(modBox, MODS, state.mods);
-  makeToggleButtons(extBox, EXTS, state.exts);
-
-  function applyConstraints(){
-    const sevNone = (state.seventh==="none");
-    [...extBox.children].forEach(btn=>{
-      if(btn.textContent==="13" || btn.textContent==="11"){
-        if(sevNone){
-          btn.classList.add("disabled");
-          btn.classList.remove("on");
-          state.exts.delete(btn.textContent);
-        }else{
-          btn.classList.remove("disabled");
-        }
-      }
-    });
+  // frets
+  for(let f=0;f<=frets;f++){
+    const x=pad+f*gapX;
+    svg.innerHTML+=`<line x1="${x}" x2="${x}" y1="${pad}" y2="${H-pad}" class="fret"/>`;
   }
 
-  function selectVoicing(){
-    const q=qualityKey();
-    const wantMods=sortArr(state.mods);
-    const wantExts=sortArr(state.exts);
+  // example dots (C7 open shape)
+  const dots = [
+    {s:2,f:1,n:1},
+    {s:4,f:2,n:2},
+    {s:5,f:3,n:3},
+    {s:3,f:3,n:4}
+  ];
 
-    const exact = VOICINGS
-      .filter(v=>v.quality===q)
-      .filter(v=>eqArr(sortArr(v.mods||[]), wantMods))
-      .filter(v=>eqArr(sortArr(v.exts||[]), wantExts))
-      .sort((a,b)=>a.priority-b.priority);
-    if(exact.length) return exact[0];
+  dots.forEach(d=>{
+    const cx=pad+(d.f-0.5)*gapX;
+    const cy=pad+(d.s-1)*gapY;
+    svg.innerHTML+=`
+      <circle cx="${cx}" cy="${cy}" r="14" class="dot"/>
+      <text x="${cx}" y="${cy+1}" class="dotText">${d.n}</text>
+    `;
+  });
+}
 
-    const cand = VOICINGS
-      .filter(v=>v.quality===q)
-      .map(v=>({v, score: intersectCount(v.mods||[], wantMods) + intersectCount(v.exts||[], wantExts)}))
-      .sort((a,b)=>(b.score-a.score) || (a.v.priority-b.v.priority));
-    if(cand.length && cand[0].score>0) return cand[0].v;
+/* ---------- RENDER ---------- */
+function render(){
+  applyAuto7();
+  document.getElementById("codeName").innerText = chordName();
+  document.getElementById("tones").innerText =
+    "Chord tones: " + chordTones().join(" – ");
+  drawFretboard();
+}
 
-    const baseOnly = VOICINGS
-      .filter(v=>v.quality===q && (v.mods||[]).length===0 && (v.exts||[]).length===0)
-      .sort((a,b)=>a.priority-b.priority);
-    return baseOnly[0] || VOICINGS[0];
-  }
-
-  // ✅ 지판 고정: nut(0) + 1~9프렛까지 항상 그림
-  function renderFretboard(vo){
-    const MAX_FRET = 9;
-
-    // storage: [E,A,D,G,B,e] low→high
-    // display: [e,B,G,D,A,E] (1번줄 위)
-    const shape=[...vo.shape].reverse();
-    const fingers=[...(vo.fingers||[0,0,0,0,0,0])].reverse();
-
-    const W=820, H=340;
-    const padL=100, padR=24, padT=52, padB=44;
-
-    const gridW=W-padL-padR, gridH=H-padT-padB;
-
-    const strings=6;
-    const stringGapY=gridH/(strings-1);
-
-    // frets: 0..MAX_FRET (0=nut)
-    const fretCount = MAX_FRET;         // number labels 1..9
-    const fretLines = MAX_FRET + 1;     // vertical lines: 0..9
-    const fretGapX = gridW / fretCount; // 9칸
-
-    const sy=(i)=>padT + i*stringGapY;
-    const fx=(f)=>padL + f*fretGapX; // f=0..9
-
-    const ns="http://www.w3.org/2000/svg";
-    const svg=document.createElementNS(ns,"svg");
-    svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
-
-    // frets (vertical 0..9)
-    for(let f=0; f<=MAX_FRET; f++){
-      const x=fx(f);
-      const line=document.createElementNS(ns,"line");
-      line.setAttribute("x1",x); line.setAttribute("x2",x);
-      line.setAttribute("y1",padT); line.setAttribute("y2",padT+gridH);
-      line.setAttribute("stroke","rgba(232,234,240,.22)");
-      line.setAttribute("stroke-width", (f===0) ? "6" : "2"); // nut
-      line.setAttribute("stroke-linecap","round");
-      svg.appendChild(line);
-    }
-
-    // strings (horizontal)
-    for(let s=0; s<strings; s++){
-      const y=sy(s);
-      const line=document.createElementNS(ns,"line");
-      line.setAttribute("x1",padL); line.setAttribute("x2",padL+gridW);
-      line.setAttribute("y1",y); line.setAttribute("y2",y);
-      line.setAttribute("stroke","rgba(232,234,240,.18)");
-      line.setAttribute("stroke-width","2");
-      line.setAttribute("stroke-linecap","round");
-      svg.appendChild(line);
-    }
-
-    // left labels
-    const labels=["1(e)","2(B)","3(G)","4(D)","5(A)","6(E)"];
-    for(let s=0;s<strings;s++){
-      const t=document.createElementNS(ns,"text");
-      t.setAttribute("x",String(padL-64));
-      t.setAttribute("y",String(sy(s)+5));
-      t.setAttribute("fill","rgba(167,173,187,.9)");
-      t.setAttribute("font-size","12");
-      t.setAttribute("font-weight","900");
-      t.textContent=labels[s];
-      svg.appendChild(t);
-    }
-
-    // fret numbers (1..9 bottom, at each cell center)
-    for(let f=1; f<=MAX_FRET; f++){
-      const t=document.createElementNS(ns,"text");
-      t.setAttribute("x",String(fx(f-0.5)));
-      t.setAttribute("y",String(padT+gridH+28));
-      t.setAttribute("text-anchor","middle");
-      t.setAttribute("fill","rgba(167,173,187,.75)");
-      t.setAttribute("font-size","11");
-      t.setAttribute("font-weight","800");
-      t.textContent=String(f);
-      svg.appendChild(t);
-    }
-
-    // X/O
-    for(let s=0;s<strings;s++){
-      const v=shape[s];
-      if(v!=="X" && v!==0) continue;
-      const t=document.createElementNS(ns,"text");
-      t.setAttribute("x",String(padL-20));
-      t.setAttribute("y",String(sy(s)+5));
-      t.setAttribute("text-anchor","middle");
-      t.setAttribute("font-size","14");
-      t.setAttribute("font-weight","900");
-      t.setAttribute("fill", v==="X" ? "rgba(255,209,102,.95)" : "rgba(139,245,193,.95)");
-      t.textContent=(v==="X")?"X":"O";
-      svg.appendChild(t);
-    }
-
-    // barre (remove "barre" word, show only finger number)
-    if(vo.barre){
-      const {fret, from, to, finger} = vo.barre;
-      if(fret>=1 && fret<=MAX_FRET){
-        const fromS = 5 - from;
-        const toS   = 5 - to;
-
-        const cx = fx(fret - 1) + fretGapX/2; // cell center of that fret
-        const y1 = sy(Math.min(fromS,toS));
-        const y2 = sy(Math.max(fromS,toS));
-
-        const rect=document.createElementNS(ns,"rect");
-        rect.setAttribute("x",String(cx-14));
-        rect.setAttribute("y",String(y1-14));
-        rect.setAttribute("width","28");
-        rect.setAttribute("height",String((y2-y1)+28));
-        rect.setAttribute("rx","14");
-        rect.setAttribute("fill","rgba(255,209,102,.18)");
-        rect.setAttribute("stroke","rgba(255,209,102,.55)");
-        rect.setAttribute("stroke-width","2");
-        svg.appendChild(rect);
-
-        const txt=document.createElementNS(ns,"text");
-        txt.setAttribute("x",String(cx));
-        txt.setAttribute("y",String(y1-22));
-        txt.setAttribute("text-anchor","middle");
-        txt.setAttribute("fill","rgba(255,209,102,.95)");
-        txt.setAttribute("font-size","12");
-        txt.setAttribute("font-weight","900");
-        txt.textContent=String(finger); // ✅ "barre" 없이 숫자만
-        svg.appendChild(txt);
-      }
-    }
-
-    // dots
-    for(let s=0;s<strings;s++){
-      const v=shape[s];
-      if(v==="X" || v===0) continue;
-      const fret=Number(v);
-      if(!(fret>=1 && fret<=MAX_FRET)) continue;
-
-      const cx = fx(fret - 1) + fretGapX/2; // cell center at fret
-      const cy = sy(s);
-
-      const dot=document.createElementNS(ns,"circle");
-      dot.setAttribute("cx",String(cx));
-      dot.setAttribute("cy",String(cy));
-      dot.setAttribute("r","14");
-      dot.setAttribute("fill","rgba(139,245,193,.92)");
-      dot.setAttribute("stroke","rgba(0,0,0,.25)");
-      dot.setAttribute("stroke-width","2");
-      svg.appendChild(dot);
-
-      const fnum=Number(fingers[s]||0);
-      if(fnum>0){
-        const t=document.createElementNS(ns,"text");
-        t.setAttribute("x",String(cx));
-        t.setAttribute("y",String(cy+5));
-        t.setAttribute("text-anchor","middle");
-        t.setAttribute("fill","rgba(0,0,0,.78)");
-        t.setAttribute("font-size","13");
-        t.setAttribute("font-weight","900");
-        t.textContent=String(fnum);
-        svg.appendChild(t);
-      }
-    }
-
-    return svg;
-  }
-
-  function render(){
-    applyConstraints();
-    const q=qualityKey();
-    const vo=selectVoicing();
-    const name=chordName();
-
-    titleEl.textContent=name;
-
-    // ✅ 우측 상단 표기: "C" + "m7" 같은 접미를 그대로 표기
-    pillName.textContent="C";
-    pillType.textContent=name.slice(1); // "m7", "7", "M7", "mM7", "sus4..." 등
-    if(pillType.textContent==="") pillType.textContent="";
-
-    let barreInfo="";
-    if(vo.barre){
-      barreInfo=`• Barre: finger ${vo.barre.finger} @ ${vo.barre.fret}fr<br/>`;
-    }
-    metaText.innerHTML =
-      `• Quality: <b>${q}</b><br/>` +
-      `• Recommended voicing: <b>${vo.id}</b><br/>` +
-      barreInfo +
-      `• X = mute, O = open<br/>` +
-      `• Finger numbers shown on dots`;
-
-    svgHost.innerHTML="";
-    svgHost.appendChild(renderFretboard(vo));
-  }
-
+/* ---------- EVENTS ---------- */
+document.getElementById("majBtn").onclick=()=>{
+  state.triad="maj";
+  majBtn.classList.add("active");
+  minBtn.classList.remove("active");
   render();
+};
+document.getElementById("minBtn").onclick=()=>{
+  state.triad="min";
+  minBtn.classList.add("active");
+  majBtn.classList.remove("active");
+  render();
+};
+
+document.querySelectorAll("[data-7]").forEach(b=>{
+  b.onclick=()=>{
+    state.seventh=b.dataset["7"];
+    document.querySelectorAll("[data-7]").forEach(x=>x.classList.remove("active"));
+    b.classList.add("active");
+    render();
+  };
 });
+
+document.querySelectorAll("[data-ext]").forEach(b=>{
+  b.onclick=()=>{
+    const e=b.dataset.ext;
+    if(state.exts.has(e)){
+      state.exts.delete(e);
+      b.classList.remove("active");
+    }else{
+      state.exts.add(e);
+      b.classList.add("active");
+    }
+    render();
+  };
+});
+
+render();
 </script>
 </body>
 </html>
