@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>C Chord Trainer</title>
+<style>
+:root{
+  --line:#242837; --text:#e8eaf0; --muted:#a7adbb;
+  --accent:#8bf5c1; --warn:#ffd166;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:transparent; color:var(--text);
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Noto Sans KR, Arial;
+}
+.wrap{padding:14px}
+.card{
+  background:linear-gradient(180deg,rgba(18,20,26,.95),rgba(18,20,26,.75));
+  border:1px solid var(--line);
+  border-radius:18px;
+  padding:16px;
+}
+h1{margin:0 0 10px;font-size:22px}
+
+.section{margin-bottom:12px}
+.label{font-size:12px;color:var(--muted);margin-bottom:6px}
+
+.options{display:flex;gap:6px;flex-wrap:wrap}
+.opt{
+  border:1px solid var(--line);
+  background:rgba(0,0,0,.25);
+  padding:6px 12px;
+  border-radius:999px;
+  font-weight:800;
+  cursor:pointer;
+}
+.opt.on{
+  background:rgba(139,245,193,.2);
+  border-color:rgba(139,245,193,.7);
+}
+
+.output{
+  margin-top:12px;
+  padding:12px;
+  border:1px solid var(--line);
+  border-radius:14px;
+  background:rgba(0,0,0,.18);
+  font-family: ui-monospace, monospace;
+  text-align:center;
+  font-size:18px;
+}
+.small{font-size:12px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <h1 id="title">C Major</h1>
+
+    <div class="section">
+      <div class="label">Base Quality</div>
+      <div class="options" id="baseOpts"></div>
+    </div>
+
+    <div class="section">
+      <div class="label">Extensions</div>
+      <div class="options" id="extOpts"></div>
+    </div>
+
+    <div class="output" id="voicing">x 3 2 0 1 0</div>
+    <div class="small">저음 E → 1번줄 e</div>
+  </div>
+</div>
+
+<script>
+const BASES = ["Major","Minor","Dominant","Sus4"];
+const EXTS  = ["add9","11","13"];
+
+const VOICINGS = {
+  "Major":        "x 3 2 0 1 0",
+  "Major+add9":   "x 3 2 0 3 0",
+  "Minor":        "x 3 5 5 4 3",
+  "Minor+11":     "x 3 5 3 4 3",
+  "Dominant":     "x 3 2 3 1 0",
+  "Dominant+13":  "x 3 2 3 5 5",
+  "Dominant+sus4":"x 3 3 3 1 1",
+  "Sus4":         "x 3 3 0 1 1",
+};
+
+let base = "Major";
+let ext  = null;
+
+const baseBox = document.getElementById("baseOpts");
+const extBox  = document.getElementById("extOpts");
+const title   = document.getElementById("title");
+const voicing = document.getElementById("voicing");
+
+function render(){
+  const key = ext ? `${base}+${ext}` : base;
+  const shape = VOICINGS[key] || VOICINGS[base];
+  title.textContent = `C ${ext ? ext.replace("add","add ") : ""} ${base}`;
+  voicing.textContent = shape;
+}
+
+BASES.forEach(b=>{
+  const btn=document.createElement("div");
+  btn.className="opt"+(b===base?" on":"");
+  btn.textContent=b;
+  btn.onclick=()=>{
+    base=b; ext=null;
+    [...baseBox.children].forEach(x=>x.classList.remove("on"));
+    btn.classList.add("on");
+    [...extBox.children].forEach(x=>x.classList.remove("on"));
+    render();
+  };
+  baseBox.appendChild(btn);
+});
+
+EXTS.forEach(e=>{
+  const btn=document.createElement("div");
+  btn.className="opt";
+  btn.textContent=e;
+  btn.onclick=()=>{
+    ext = (ext===e?null:e);
+    [...extBox.children].forEach(x=>x.classList.remove("on"));
+    if(ext) btn.classList.add("on");
+    render();
+  };
+  extBox.appendChild(btn);
+});
+
+render();
+</script>
+</body>
+</html>
