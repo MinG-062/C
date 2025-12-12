@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>C Chord Badge</title>
+<title>C Chord Trainer</title>
 <style>
 body{
   margin:0;
@@ -11,20 +11,20 @@ body{
   font-family:system-ui,-apple-system,sans-serif;
 }
 .wrap{
-  max-width:1000px;
+  max-width:1040px;
   margin:40px auto;
-  padding:26px;
+  padding:28px;
   background:linear-gradient(180deg,#1b1f27,#141821);
   border-radius:18px;
 }
 h1{margin:0;font-size:28px}
 .sub{opacity:.6;font-size:13px;margin-bottom:18px}
-.main{display:grid;grid-template-columns:1fr 300px;gap:20px}
+.main{display:grid;grid-template-columns:1fr 320px;gap:20px}
 
 /* ---------- FRETBOARD ---------- */
 svg{
   width:100%;
-  height:360px;
+  height:380px;
   background:radial-gradient(120% 120% at 50% 0%,#242a35,#151a22);
   border-radius:14px;
 }
@@ -33,6 +33,8 @@ svg{
 .dot{fill:#7ef0c4;stroke:#0c1b14;stroke-width:2}
 .dotText{fill:#0c1b14;font-weight:900;font-size:14px;text-anchor:middle;dominant-baseline:middle}
 .labelText{fill:rgba(255,255,255,.65);font-size:12px}
+.open{fill:none;stroke:#7ef0c4;stroke-width:3}
+.mute{fill:#f0c46a;font-size:14px;font-weight:900}
 
 /* ---------- PANEL ---------- */
 .panel{
@@ -59,16 +61,20 @@ button.active{
   color:#0c1b14;
   font-weight:800;
 }
+button.disabled{
+  opacity:.4;
+  pointer-events:none;
+}
 </style>
 </head>
 
 <body>
 <div class="wrap">
   <h1>C</h1>
-  <div class="sub">Triad + 7th + Extensions 구조</div>
+  <div class="sub">Triad + 7th + Extensions (정상 화성 구조)</div>
 
   <div class="main">
-    <svg id="fretboard" viewBox="0 0 720 360"></svg>
+    <svg id="fretboard" viewBox="0 0 720 380"></svg>
 
     <div class="panel">
       <div class="codeName" id="codeName">C</div>
@@ -110,130 +116,115 @@ const state={
   triad:"maj",
   seventh:"none",
   add9:false,
-  ext:null // null | 9 | 11 | 13
+  ext:null
 };
 
-/* ---------- AUTO 7 RULE ---------- */
+/* ---------- VOICINGS (C 기준 최소 DB) ---------- */
+const VOICINGS={
+  "C":      {shape:["x",3,2,0,1,0], fingers:[0,3,2,0,1,0]},
+  "Cm":     {shape:["x",3,1,0,1,3], fingers:[0,3,1,0,1,4]},
+  "C7":     {shape:["x",3,2,3,1,0], fingers:[0,3,2,4,1,0]},
+  "CM7":    {shape:["x",3,2,0,0,0], fingers:[0,3,2,0,0,0]},
+  "Cm7":    {shape:["x",3,1,3,1,3], fingers:[0,3,1,4,1,4]},
+  "C9":     {shape:["x",3,2,3,3,3], fingers:[0,1,2,3,3,3]},
+  "Cm11":   {shape:["x",3,1,3,1,1], fingers:[0,3,1,4,1,1]},
+  "C13":    {shape:["x",3,2,3,5,5], fingers:[0,1,2,3,4,4]}
+};
+
+/* ---------- AUTO 7 ---------- */
 function applyAuto7(){
   if(state.ext!==null){
     state.seventh="b7";
-    document.querySelectorAll("[data-7]").forEach(b=>{
-      b.classList.toggle("active",b.dataset["7"]==="b7");
-    });
   }
 }
 
-/* ---------- CHORD NAME ---------- */
-function chordName(){
-  let n="C";
-  if(state.triad==="min") n+="m";
+/* ---------- QUALITY KEY ---------- */
+function qualityKey(){
+  let k="C";
+  if(state.triad==="min") k+="m";
 
   if(state.ext!==null){
-    n+=state.ext;
+    k+=state.ext;
   }else{
-    if(state.seventh==="b7") n+="7";
-    if(state.seventh==="M7") n+="M7";
+    if(state.seventh==="b7") k+="7";
+    if(state.seventh==="M7") k+="M7";
+    if(state.add9) k+="add9";
   }
-
-  if(state.add9 && state.ext===null) n+="add9";
-  return n;
+  return k;
 }
 
 /* ---------- CHORD TONES ---------- */
 function chordTones(){
-  const t=[];
-  t.push("C");
-  t.push(state.triad==="min"?"Eb":"E");
-  t.push("G");
-
+  const t=["C", state.triad==="min"?"Eb":"E", "G"];
   if(state.seventh==="b7") t.push("Bb");
   if(state.seventh==="M7") t.push("B");
-
-  if(state.add9 || state.ext!==null) t.push("D");
+  if(state.add9||state.ext!==null) t.push("D");
   if(state.ext>=11) t.push("F");
   if(state.ext===13) t.push("A");
-
   return t;
 }
 
-/* ---------- FRETBOARD ---------- */
+/* ---------- FRETBOARD RENDER ---------- */
 function drawFretboard(){
   const svg=document.getElementById("fretboard");
   svg.innerHTML="";
-  const W=720,H=360,p=50;
+  const W=720,H=380,p=60;
   const strings=6,frets=9;
   const gx=(W-p*2)/frets;
   const gy=(H-p*2)/(strings-1);
 
-  // string labels (1~6)
   const labels=["1(e)","2(B)","3(G)","4(D)","5(A)","6(E)"];
   labels.forEach((l,i)=>{
-    const y=p+i*gy+4;
-    svg.innerHTML+=`<text x="20" y="${y}" class="labelText">${l}</text>`;
+    svg.innerHTML+=`<text x="20" y="${p+i*gy+4}" class="labelText">${l}</text>`;
   });
 
-  // strings
   for(let s=0;s<strings;s++){
     const y=p+s*gy;
     svg.innerHTML+=`<line x1="${p}" x2="${W-p}" y1="${y}" y2="${y}" class="string"/>`;
   }
-
-  // frets
   for(let f=0;f<=frets;f++){
     const x=p+f*gx;
     svg.innerHTML+=`<line x1="${x}" x2="${x}" y1="${p}" y2="${H-p}" class="fret"/>`;
   }
 
-  // example voicing (C7 open)
-  const dots=[
-    {s:1,f:1,n:1},
-    {s:3,f:3,n:4},
-    {s:4,f:2,n:2},
-    {s:5,f:3,n:3}
-  ];
+  const v=VOICINGS[qualityKey()];
+  if(!v) return;
 
-  dots.forEach(d=>{
-    const cx=p+(d.f-0.5)*gx;
-    const cy=p+(d.s-1)*gy;
-    svg.innerHTML+=`
-      <circle cx="${cx}" cy="${cy}" r="14" class="dot"/>
-      <text x="${cx}" y="${cy+1}" class="dotText">${d.n}</text>`;
+  v.shape.forEach((fret,i)=>{
+    const y=p+i*gy;
+    if(fret==="x"){
+      svg.innerHTML+=`<text x="${p-30}" y="${y+5}" class="mute">X</text>`;
+    }else if(fret===0){
+      svg.innerHTML+=`<circle cx="${p-20}" cy="${y}" r="6" class="open"/>`;
+    }else{
+      const x=p+(fret-0.5)*gx;
+      svg.innerHTML+=`
+        <circle cx="${x}" cy="${y}" r="14" class="dot"/>
+        <text x="${x}" y="${y+1}" class="dotText">${v.fingers[i]}</text>`;
+    }
   });
 }
 
 /* ---------- RENDER ---------- */
 function render(){
   applyAuto7();
-  document.getElementById("codeName").innerText=chordName();
+  const key=qualityKey();
+  document.getElementById("codeName").innerText=key;
   document.getElementById("tones").innerText=
     "Chord tones: "+chordTones().join(" – ");
   drawFretboard();
 }
 
 /* ---------- EVENTS ---------- */
-majBtn.onclick=()=>{
-  state.triad="maj";
-  majBtn.classList.add("active");
-  minBtn.classList.remove("active");
-  render();
-};
-minBtn.onclick=()=>{
-  state.triad="min";
-  minBtn.classList.add("active");
-  majBtn.classList.remove("active");
-  render();
-};
+majBtn.onclick=()=>{state.triad="maj";majBtn.classList.add("active");minBtn.classList.remove("active");render();}
+minBtn.onclick=()=>{state.triad="min";minBtn.classList.add("active");majBtn.classList.remove("active");render();}
 
 document.querySelectorAll("[data-7]").forEach(b=>{
-  b.onclick=()=>{
-    state.seventh=b.dataset["7"];
-    document.querySelectorAll("[data-7]").forEach(x=>x.classList.remove("active"));
-    b.classList.add("active");
-    render();
-  };
+  b.onclick=()=>{state.seventh=b.dataset["7"];render();}
 });
 
 add9Btn.onclick=()=>{
+  if(state.ext!==null) return;
   state.add9=!state.add9;
   add9Btn.classList.toggle("active",state.add9);
   render();
@@ -241,9 +232,10 @@ add9Btn.onclick=()=>{
 
 document.querySelectorAll("[data-ext]").forEach(b=>{
   b.onclick=()=>{
-    state.ext=b.dataset.ext;
+    const v=b.dataset.ext;
+    state.ext=(state.ext===v?null:v);
     document.querySelectorAll("[data-ext]").forEach(x=>x.classList.remove("active"));
-    b.classList.add("active");
+    if(state.ext) b.classList.add("active");
     render();
   };
 });
